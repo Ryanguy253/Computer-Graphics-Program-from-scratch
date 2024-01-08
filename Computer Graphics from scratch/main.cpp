@@ -52,10 +52,6 @@ Sphere sphere3{ {0,0,0},0.1,{0,255,0} }; // Green Sphere 3
 Sphere _sceneSpheres[SPHERES] = { sphere1,sphere2,sphere3 };
 
 
-
-
-
-
 bool isSphereNULL(const Sphere& sphere){
 	return sphere.center.x == 0 && sphere.center.y == 0 && sphere.center.z == 0 && sphere.radius == 0 && sphere.color.a == 0
 		&& sphere.color.g == 0&& sphere.color.b==0&&sphere.color.r==0;
