@@ -5,6 +5,7 @@
 
 //issues
 // solved the discriminant being always 0 -> floating point inaccuracy, need to use epsilon
+
 /* second issue : 
 			no copy construtcor
 			closest_sphere.center.x = _spheres[i].center.x;
@@ -21,6 +22,7 @@
 			closest_sphere = _spheres[i]; .// you did this originally
 			//cout << "Cloest_t : " << closest_t << endl;
 		}
+
 third issue : when i uncomment cout<< at 
 			if (t2 > t_min && t2 < t_max && t2 < closest_t) {
 			closest_t = t2;
@@ -35,15 +37,11 @@ third issue : when i uncomment cout<< at
 		
 */
 
-
-
-
-
 using namespace std;
 
 int window_width = 1000;
 int window_height = 800;
-Color BGcolour = BLACK;
+Color BGcolour = RAYWHITE;
 
 //initialise canvas width/height
 int CanvasWidth = window_width;
@@ -84,10 +82,38 @@ Sphere sphere3{ {-2,0,4},1.0,{0,255,0,255} };
 //sphere3.radius = 1.0;
 //sphere3.color = { 0, 255, 0 ,255 }; // Green*/
 
-//sphere array
-#define SPHERES 3
-Sphere _spheres[SPHERES] = {sphere1,sphere2,sphere3};
+Sphere sphere4{ {0,-5001,0},5000.0,{255,255,0,255} };
 
+
+//sphere array
+#define SPHERES 4
+Sphere _spheres[SPHERES] = {sphere1,sphere2,sphere3,sphere4};
+
+// light
+// 1 ambient
+// 2 point
+// 3 directional
+
+struct Light {
+	int type;
+	float intensity;
+	Vector3 position;
+	Vector3 direction;
+};
+
+//initialise lights
+//Light light_ambient{ 1,0.2,{0} ,{0} };
+//Light light_point{ 2,0.6,{2,1,0},{0} };
+//Light light_directional{ 3,0.2,{0},{1,4,4} };
+Light light_ambient{ 0,0.2,{0} ,{0} };
+Light light_point1{ 2,0.2,{-2,1,0},{0} };
+Light light_point2{ 2,0.2,{2,1,0},{0} };
+Light light_directional{ 0,0.6,{0},{0,1,0} };
+
+//light array
+#define LIGHTS 4
+//Light _lights[LIGHTS] = { light_ambient,light_point,light_directional };
+Light _lights[LIGHTS] = { light_ambient,light_point1,light_point2,light_directional };
 
 // Traceray
 float closest_t;
@@ -96,13 +122,6 @@ Sphere closest_sphere;
 
 void initialise() {
 	InitWindow(window_width, window_height, "Graphics Engine");
-	
-
-
-
-
-
-
 }
 void DrawPixelCenter(int posXorigin, int posYorigin, Color color) {
 	/*The upside-down output is likely due to the difference in coordinate systems between traditional computer graphics and the coordinate system used by Raylib.
@@ -183,7 +202,40 @@ void IntersectRaySphere(Vector3 O, Vector3 D, Sphere sphere, float* t1, float* t
 	}
 }
 
+float ComputeLighting(Vector3 P, Vector3 N) {
+	float i = 0;
+	Vector3 L = { 0 };
+	float n_dot_l;
+	const float epsilon= 0.0001;
+
+	for (int j = 0; j < LIGHTS; j++) {
+		if (_lights[j].type == 1) {
+			i += _lights[j].intensity;
+		}
+		else if(_lights[j].type == 2){
+			L = Vector3Subtract(_lights[j].position,P);
+		}
+		else {
+			L.x = _lights[j].direction.x;
+			L.y = _lights[j].direction.y;
+			L.z = _lights[j].direction.z;
+		}
+		n_dot_l = Vector3DotProduct(N, L);
+		if (fabs(n_dot_l) < epsilon) {
+			continue;
+		}
+		if (n_dot_l > 0) {
+			i += _lights[j].intensity * n_dot_l / (Vector3Length(N) * Vector3Length(L));
+		}
+
+	}
+	//cout << "LIGHT INTENSITY: " << i << endl;
+	return i;
+}
+
 Color TraceRay(Vector3 O, Vector3 D, float t_min, float t_max) {
+	Vector3 P;
+	Vector3 N;
 	closest_t = INFINITY;
 	closest_sphere = { Vector3{0, 0, 0}, 0, Color{0, 0, 0, 0} };
 	for (int i = 0; i < SPHERES; i++) {
@@ -236,9 +288,22 @@ Color TraceRay(Vector3 O, Vector3 D, float t_min, float t_max) {
 	}
 		
 	//cout << "COLOUR RETURNED : " << "R : " << closest_sphere.color.r << "G : " << closest_sphere.color.g << "B : " << closest_sphere.color.b << "A : " << closest_sphere.color.a<<endl;
+	P = Vector3Add(O, Vector3Scale(D,closest_t)); // Compute intersection
+	N = Vector3Subtract(P, closest_sphere.center); // Compute sphere normal at intersection
+	N = Vector3Scale( N, Vector3Length(N));
+
+	closest_sphere.color.r = (unsigned char)(closest_sphere.color.r * ComputeLighting(P, N));
+	closest_sphere.color.g = (unsigned char)(closest_sphere.color.g * ComputeLighting(P, N));
+	closest_sphere.color.b = (unsigned char)(closest_sphere.color.b * ComputeLighting(P, N));
+	
+	
+
+	//cout << "R: " << closest_sphere.color.r << endl;
+	//WaitTime(1);
+	//cout << "COLOUR RETURNED After Lighting: " << "R : " << closest_sphere.color.r << "G : " << closest_sphere.color.g << "B : " << closest_sphere.color.b << "A : " << closest_sphere.color.a << endl;
+
+
 	return closest_sphere.color;
-
-
 }
 
 
