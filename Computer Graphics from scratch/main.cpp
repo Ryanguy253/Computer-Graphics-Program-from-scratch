@@ -53,7 +53,7 @@ int ViewportWidth = 1;
 int ViewportHeight = 1;
 
 //initialise camera
-Vector3 O;
+Vector3 O{ 0,0,0 };
 
 // initialise D
 Vector3 D;
@@ -87,7 +87,7 @@ Sphere sphere3{ {-2,0,4},1.0,{0,255,0,255}, 100 };
 //sphere3.color = { 0, 255, 0 ,255 }; // Green*/
 //sphere3.specular = 100 // somewhat shiny
 
-Sphere sphere4{ {0,-5001,0},5000.0,{255,255,0,255},10 };
+Sphere sphere4{ {0,-5001,0},5000.0,{65,152,10,255},10 };
 
 
 //sphere array
@@ -110,9 +110,9 @@ struct Light {
 //Light light_ambient{ 1,0.2,{0} ,{0} };
 //Light light_point{ 2,0.6,{2,1,0},{0} };
 //Light light_directional{ 3,0.2,{0},{1,4,4} };
-Light light_ambient{ 1,0.2,{0} ,{0} };
+Light light_ambient{ 1,0.1,{0} ,{0} };
 Light light_point1{ 2,0.1,{-2,1,0},{0} };
-Light light_point2{ 3,0.7,{0},{0,4,1} };
+Light light_point2{ 3,0.8,{0},{0,3,0} };
 Light light_directional{ 0,0.1,{0},{1,4,4} };
 
 //light array
@@ -223,7 +223,7 @@ float ComputeLighting(Vector3 P, Vector3 N, Vector3 V, int s) {
 		else if(_lights[j].type == 2){
 			L = Vector3Subtract(_lights[j].position,P);
 		}
-		else {
+		else if (_lights[j].type == 3) {
 			L.x = _lights[j].direction.x;
 			L.y = _lights[j].direction.y;
 			L.z = _lights[j].direction.z;
@@ -342,7 +342,26 @@ void quit() {
 	CloseWindow();
 }
 void input() {
-	
+	if (IsKeyDown(KEY_W)) {
+		O.z += 1;
+	}
+	if (IsKeyDown(KEY_S)){
+		O.z -=1;
+	}
+	if (IsKeyDown(KEY_A)){
+		O.x -= 1;
+	}
+	if (IsKeyDown(KEY_D)) {
+		O.x += 1;
+	}
+	if (IsKeyDown(KEY_SPACE)) {
+		O.y += 1;
+	}
+	if (IsKeyDown(KEY_LEFT_SHIFT)) {
+		O.y -= 1;
+	}
+	//fps
+	cout << "FPS : " << GetFPS() << endl;
 }
 void update() {
 
@@ -350,7 +369,7 @@ void update() {
 void render() {
 	BeginDrawing();
 	//ClearBackground(BGcolour);
-	O = { 0,0,0 };
+	
 	
 	for (int x = -CanvasWidth / 2; x <= CanvasWidth / 2; x++) {
 		for (int y = -CanvasHeight / 2; y <= CanvasHeight / 2; y++) {
