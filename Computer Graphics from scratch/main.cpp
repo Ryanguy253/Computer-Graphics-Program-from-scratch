@@ -2,6 +2,7 @@
 #include "raymath.h"
 #include <stdio.h>
 #include<iostream>
+#include <math.h>
 
 //issues
 // solved the discriminant being always 0 -> floating point inaccuracy, need to use epsilon
@@ -65,24 +66,28 @@ struct Sphere {
 	Vector3 center;
 	float radius;
 	Color color;
+	int specular;
 };
 //initiliase sphere
-Sphere sphere1 { {0,-1,3},1.0,{255,0,0,255} };
+Sphere sphere1 { {0,-1,3},1.0,{255,0,0,255},50 };
 //sphere1.center = { 0,-1,3 };
 //sphere1.radius = 1.0;
 //sphere1.color = { 255,0,0,255 }; //red
+//sphere1.specular = 500 //shiny
 
-Sphere sphere2{ {2,0,4},1.0,{0,0,255,255} };
+Sphere sphere2{ {2,0,4},1.0,{0,0,255,255},50 };
 //sphere2.center = { 2, 0, 4 };
 //sphere2.radius = 1.0;
 //sphere2.color = { 0, 0, 255 ,255 };// Blue
+//sphere2.specular = 500//shiny
 
-Sphere sphere3{ {-2,0,4},1.0,{0,255,0,255} };
+Sphere sphere3{ {-2,0,4},1.0,{0,255,0,255}, 100 };
 //sphere3.center = { -2, 0, 4 };
 //sphere3.radius = 1.0;
 //sphere3.color = { 0, 255, 0 ,255 }; // Green*/
+//sphere3.specular = 100 // somewhat shiny
 
-Sphere sphere4{ {0,-5001,0},5000.0,{255,255,0,255} };
+Sphere sphere4{ {0,-5001,0},5000.0,{255,255,0,255},10 };
 
 
 //sphere array
@@ -105,10 +110,10 @@ struct Light {
 //Light light_ambient{ 1,0.2,{0} ,{0} };
 //Light light_point{ 2,0.6,{2,1,0},{0} };
 //Light light_directional{ 3,0.2,{0},{1,4,4} };
-Light light_ambient{ 0,0.2,{0} ,{0} };
-Light light_point1{ 2,0.2,{-2,1,0},{0} };
-Light light_point2{ 2,0.2,{2,1,0},{0} };
-Light light_directional{ 0,0.6,{0},{0,1,0} };
+Light light_ambient{ 1,0.2,{0} ,{0} };
+Light light_point1{ 2,0.1,{-2,1,0},{0} };
+Light light_point2{ 3,0.7,{0},{0,4,1} };
+Light light_directional{ 0,0.1,{0},{1,4,4} };
 
 //light array
 #define LIGHTS 4
@@ -202,11 +207,14 @@ void IntersectRaySphere(Vector3 O, Vector3 D, Sphere sphere, float* t1, float* t
 	}
 }
 
-float ComputeLighting(Vector3 P, Vector3 N) {
+float ComputeLighting(Vector3 P, Vector3 N, Vector3 V, int s) {
 	float i = 0;
 	Vector3 L = { 0 };
+	Vector3 R = { 0 };
 	float n_dot_l;
 	const float epsilon= 0.0001;
+	float r_dot_v;
+	
 
 	for (int j = 0; j < LIGHTS; j++) {
 		if (_lights[j].type == 1) {
@@ -220,14 +228,29 @@ float ComputeLighting(Vector3 P, Vector3 N) {
 			L.y = _lights[j].direction.y;
 			L.z = _lights[j].direction.z;
 		}
+		//diffuse lighting
 		n_dot_l = Vector3DotProduct(N, L);
 		if (fabs(n_dot_l) < epsilon) {
-			continue;
+			continue; //treat as 0
 		}
 		if (n_dot_l > 0) {
 			i += _lights[j].intensity * n_dot_l / (Vector3Length(N) * Vector3Length(L));
 		}
 
+		//specular lighting
+		if (s != -1) {
+
+			Vector3 _2N = Vector3Scale(Vector3Normalize(N), 2.0);
+			Vector3 _2N_dotNL = Vector3Scale(_2N, Vector3DotProduct(N, L));
+
+			R = Vector3Subtract(_2N_dotNL, L);
+			r_dot_v = Vector3DotProduct(R, V);
+
+			if (r_dot_v > 0) {
+				i += _lights[j].intensity * pow((r_dot_v / (Vector3Length(R) * Vector3Length (V))), s);
+			}
+
+		}
 	}
 	//cout << "LIGHT INTENSITY: " << i << endl;
 	return i;
@@ -259,6 +282,8 @@ Color TraceRay(Vector3 O, Vector3 D, float t_min, float t_max) {
 
 			//why when i uncomment this the program wont work?
 			//cout << "Cloest_t : " << closest_t<<endl;
+
+			closest_sphere.specular = _spheres[i].specular;
 		}
 
 		if (t2 > t_min && t2 < t_max && t2 < closest_t) {
@@ -276,6 +301,8 @@ Color TraceRay(Vector3 O, Vector3 D, float t_min, float t_max) {
 			closest_sphere.color.a = _spheres[i].color.a;
 			//why when i uncomment this the program wont work?
 			//cout << "Cloest_t : " << closest_t << endl;
+
+			closest_sphere.specular = _spheres[i].specular;
 		}
 	}
 	const float epsilon = 0.0001;
@@ -292,10 +319,12 @@ Color TraceRay(Vector3 O, Vector3 D, float t_min, float t_max) {
 	N = Vector3Subtract(P, closest_sphere.center); // Compute sphere normal at intersection
 	N = Vector3Scale( N, Vector3Length(N));
 
-	closest_sphere.color.r = (unsigned char)(closest_sphere.color.r * ComputeLighting(P, N));
-	closest_sphere.color.g = (unsigned char)(closest_sphere.color.g * ComputeLighting(P, N));
-	closest_sphere.color.b = (unsigned char)(closest_sphere.color.b * ComputeLighting(P, N));
-	
+	closest_sphere.color.r = (unsigned char)Clamp(closest_sphere.color.r * ComputeLighting(P, N,Vector3Negate(D),closest_sphere.specular),0,255);
+	closest_sphere.color.g = (unsigned char)Clamp(closest_sphere.color.g * ComputeLighting(P, N,Vector3Negate(D),closest_sphere.specular),0,255);
+	closest_sphere.color.b = (unsigned char)Clamp(closest_sphere.color.b * ComputeLighting(P, N,Vector3Negate(D),closest_sphere.specular),0,255);
+	/*When you multiply the RGB components of the color with the specular reflection intensity, 
+	you might end up with a color that is too dark or saturated, especially if the specular reflection intensity is high.
+	Instead, you should scale the intensity while keeping the color values within a valid range.*/
 	
 
 	//cout << "R: " << closest_sphere.color.r << endl;
@@ -313,7 +342,7 @@ void quit() {
 	CloseWindow();
 }
 void input() {
-
+	
 }
 void update() {
 
