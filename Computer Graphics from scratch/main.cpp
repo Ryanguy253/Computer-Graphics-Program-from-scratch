@@ -110,9 +110,9 @@ struct Light {
 //Light light_ambient{ 1,0.2,{0} ,{0} };
 //Light light_point{ 2,0.6,{2,1,0},{0} };
 //Light light_directional{ 3,0.2,{0},{1,4,4} };
-Light light_ambient{ 1,0.1,{0} ,{0} };
+Light light_ambient{ 1,0.4,{0} ,{0} };
 Light light_point1{ 2,0.1,{-2,1,0},{0} };
-Light light_point2{ 3,0.8,{0},{0,3,0} };
+Light light_point2{ 3,0.5,{0},{0,3,0} };
 Light light_directional{ 0,0.1,{0},{1,4,4} };
 
 //light array
@@ -124,6 +124,8 @@ Light _lights[LIGHTS] = { light_ambient,light_point1,light_point2,light_directio
 float closest_t;
 Sphere closest_sphere;
 
+//shadow
+Sphere closest_shadow;
 
 void initialise() {
 	InitWindow(window_width, window_height, "Graphics Engine");
@@ -206,65 +208,13 @@ void IntersectRaySphere(Vector3 O, Vector3 D, Sphere sphere, float* t1, float* t
 		//cout << "Roots: " << *t1 << ", " << *t2 << endl;
 	}
 }
-
-float ComputeLighting(Vector3 P, Vector3 N, Vector3 V, int s) {
-	float i = 0;
-	Vector3 L = { 0 };
-	Vector3 R = { 0 };
-	float n_dot_l;
-	const float epsilon= 0.0001;
-	float r_dot_v;
-	
-
-	for (int j = 0; j < LIGHTS; j++) {
-		if (_lights[j].type == 1) {
-			i += _lights[j].intensity;
-		}
-		else if(_lights[j].type == 2){
-			L = Vector3Subtract(_lights[j].position,P);
-		}
-		else if (_lights[j].type == 3) {
-			L.x = _lights[j].direction.x;
-			L.y = _lights[j].direction.y;
-			L.z = _lights[j].direction.z;
-		}
-		//diffuse lighting
-		n_dot_l = Vector3DotProduct(N, L);
-		if (fabs(n_dot_l) < epsilon) {
-			continue; //treat as 0
-		}
-		if (n_dot_l > 0) {
-			i += _lights[j].intensity * n_dot_l / (Vector3Length(N) * Vector3Length(L));
-		}
-
-		//specular lighting
-		if (s != -1) {
-
-			Vector3 _2N = Vector3Scale(Vector3Normalize(N), 2.0);
-			Vector3 _2N_dotNL = Vector3Scale(_2N, Vector3DotProduct(N, L));
-
-			R = Vector3Subtract(_2N_dotNL, L);
-			r_dot_v = Vector3DotProduct(R, V);
-
-			if (r_dot_v > 0) {
-				i += _lights[j].intensity * pow((r_dot_v / (Vector3Length(R) * Vector3Length (V))), s);
-			}
-
-		}
-	}
-	//cout << "LIGHT INTENSITY: " << i << endl;
-	return i;
-}
-
-Color TraceRay(Vector3 O, Vector3 D, float t_min, float t_max) {
-	Vector3 P;
-	Vector3 N;
+void ClosestIntersection(Vector3 O, Vector3 D, float t_min, float t_max) {
 	closest_t = INFINITY;
 	closest_sphere = { Vector3{0, 0, 0}, 0, Color{0, 0, 0, 0} };
 	for (int i = 0; i < SPHERES; i++) {
 		float t1;
 		float t2;
-		IntersectRaySphere(O, D, _spheres[i],&t1,&t2);
+		IntersectRaySphere(O, D, _spheres[i], &t1, &t2);
 
 		if (t1 > t_min && t1 < t_max && t1 < closest_t) {
 			closest_t = t1;
@@ -305,8 +255,127 @@ Color TraceRay(Vector3 O, Vector3 D, float t_min, float t_max) {
 			closest_sphere.specular = _spheres[i].specular;
 		}
 	}
-	const float epsilon = 0.0001;
+}
+void ClosestShadowIntersection(Vector3 O, Vector3 D, float t_min, float t_max) {
+	closest_t = INFINITY;
+	closest_shadow = { Vector3{0, 0, 0}, 0, Color{0, 0, 0, 0} };
+	for (int i = 0; i < SPHERES; i++) {
+		float t1;
+		float t2;
+		IntersectRaySphere(O, D, _spheres[i], &t1, &t2);
 
+		if (t1 > t_min && t1 < t_max && t1 < closest_t) {
+			closest_t = t1;
+			//make copy construtcor
+			closest_shadow.center.x = _spheres[i].center.x;
+			closest_shadow.center.y = _spheres[i].center.y;
+			closest_shadow.center.z = _spheres[i].center.z;
+
+			closest_shadow.radius = _spheres[i].radius;
+
+			closest_shadow.color.r = _spheres[i].color.r;
+			closest_shadow.color.g = _spheres[i].color.g;
+			closest_shadow.color.b = _spheres[i].color.b;
+			closest_shadow.color.a = _spheres[i].color.a;
+
+			//why when i uncomment this the program wont work?
+			//cout << "Cloest_t : " << closest_t<<endl;
+
+			closest_shadow.specular = _spheres[i].specular;
+		}
+
+		if (t2 > t_min && t2 < t_max && t2 < closest_t) {
+			closest_t = t2;
+
+			closest_shadow.center.x = _spheres[i].center.x;
+			closest_shadow.center.y = _spheres[i].center.y;
+			closest_shadow.center.z = _spheres[i].center.z;
+
+			closest_shadow.radius = _spheres[i].radius;
+
+			closest_shadow.color.r = _spheres[i].color.r;
+			closest_shadow.color.g = _spheres[i].color.g;
+			closest_shadow.color.b = _spheres[i].color.b;
+			closest_shadow.color.a = _spheres[i].color.a;
+			//why when i uncomment this the program wont work?
+			//cout << "Cloest_t : " << closest_t << endl;
+
+			closest_shadow.specular = _spheres[i].specular;
+		}
+	}
+}
+
+float ComputeLighting(Vector3 P, Vector3 N, Vector3 V, int s) {
+	float i = 0;
+	float t_max =1;
+	Vector3 L = { 0 };
+	Vector3 R = { 0 };
+	float n_dot_l;
+	const float epsilon= 0.0001;
+	float r_dot_v;
+	
+
+	for (int j = 0; j < LIGHTS; j++) {
+		if (_lights[j].type == 1) {
+			i += _lights[j].intensity;
+		}
+		else {
+			if (_lights[j].type == 2) {
+			L = Vector3Subtract(_lights[j].position, P);
+			t_max = 1;
+			}
+
+			if (_lights[j].type == 3) {
+				L.x = _lights[j].direction.x;
+				L.y = _lights[j].direction.y;
+				L.z = _lights[j].direction.z;
+				t_max = 10000000000;
+			}
+		
+			//compute shadows
+			ClosestShadowIntersection(P, L, 0.001, t_max);
+			if (closest_shadow.radius != 0) {
+				continue;
+			}
+		
+		}
+
+		//diffuse lighting
+		n_dot_l = Vector3DotProduct(N, L);
+		if (fabs(n_dot_l) < epsilon) {
+			continue; //treat as 0
+		}
+		if (n_dot_l > 0) {
+			i += _lights[j].intensity * n_dot_l / (Vector3Length(N) * Vector3Length(L));
+		}
+
+		//specular lighting
+		if (s != -1) {
+
+			Vector3 _2N = Vector3Scale(Vector3Normalize(N), 2.0);
+			Vector3 _2N_dotNL = Vector3Scale(_2N, Vector3DotProduct(N, L));
+
+			R = Vector3Subtract(_2N_dotNL, L);
+			r_dot_v = Vector3DotProduct(R, V);
+
+			if (r_dot_v > 0) {
+				i += _lights[j].intensity * pow((r_dot_v / (Vector3Length(R) * Vector3Length (V))), s);
+			}
+
+		}
+	}
+
+	//cout << "LIGHT INTENSITY: " << i << endl;
+	return i;
+}
+
+Color TraceRay(Vector3 O, Vector3 D, float t_min, float t_max) {
+	Vector3 P;
+	Vector3 N;
+	
+	ClosestIntersection(O, D, t_min, t_max);
+
+	const float epsilon = 0.0001;
 	// Use epsilon for floating-point comparison
 	if (fabs(closest_sphere.radius) < epsilon) {
 		//cout << " BG COLOUR RETURNED" << endl;
@@ -325,13 +394,9 @@ Color TraceRay(Vector3 O, Vector3 D, float t_min, float t_max) {
 	/*When you multiply the RGB components of the color with the specular reflection intensity, 
 	you might end up with a color that is too dark or saturated, especially if the specular reflection intensity is high.
 	Instead, you should scale the intensity while keeping the color values within a valid range.*/
-	
-
 	//cout << "R: " << closest_sphere.color.r << endl;
 	//WaitTime(1);
 	//cout << "COLOUR RETURNED After Lighting: " << "R : " << closest_sphere.color.r << "G : " << closest_sphere.color.g << "B : " << closest_sphere.color.b << "A : " << closest_sphere.color.a << endl;
-
-
 	return closest_sphere.color;
 }
 
