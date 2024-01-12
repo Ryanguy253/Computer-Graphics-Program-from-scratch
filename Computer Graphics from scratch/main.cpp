@@ -110,9 +110,9 @@ struct Light {
 //Light light_ambient{ 1,0.2,{0} ,{0} };
 //Light light_point{ 2,0.6,{2,1,0},{0} };
 //Light light_directional{ 3,0.2,{0},{1,4,4} };
-Light light_ambient{ 1,0.4,{0} ,{0} };
-Light light_point1{ 2,0.1,{-2,1,0},{0} };
-Light light_point2{ 3,0.5,{0},{0,3,0} };
+Light light_ambient{ 1,0.5,{0} ,{0} };
+Light light_point1{ 2,0.2,{-2,1,0},{0} };
+Light light_point2{ 3,0.3,{0},{0,3,0} };
 Light light_directional{ 0,0.1,{0},{1,4,4} };
 
 //light array
@@ -126,6 +126,39 @@ Sphere closest_sphere;
 
 //shadow
 Sphere closest_shadow;
+
+//Rotation
+// Float Beta (radians)
+float B = PI/2;
+//Matrix
+//Z-rotation
+Matrix Z_Rotation(float B)
+{
+	return Matrix{ cos(B),-sin(B),0,0,
+			sin(B),cos(B),0,0,
+			0,0,1,0,
+			0,0,0,1 };
+}
+//Y Rotation
+Matrix Y_Rotation(float B)
+{
+	return Matrix{ cos(B),0,sin(B),0,
+			0,1,0,0,
+			-sin(B),0,cos(B),0,
+			0,0,0,1 };
+}
+//X Rotation
+Matrix X_Rotation (float B) 
+{
+	return Matrix{ 1,0,0,0,
+			0,cos(B),-sin(B),0,
+			0,sin(B),cos(B),0,
+			0,0,0,1 };
+}
+
+float _x_rotation = 0;
+float _y_rotation = 0;
+float _z_rotation = 0 ;
 
 void initialise() {
 	InitWindow(window_width, window_height, "Graphics Engine");
@@ -410,10 +443,10 @@ void input() {
 	if (IsKeyDown(KEY_W)) {
 		O.z += 1;
 	}
-	if (IsKeyDown(KEY_S)){
-		O.z -=1;
+	if (IsKeyDown(KEY_S)) {
+		O.z -= 1;
 	}
-	if (IsKeyDown(KEY_A)){
+	if (IsKeyDown(KEY_A)) {
 		O.x -= 1;
 	}
 	if (IsKeyDown(KEY_D)) {
@@ -427,6 +460,23 @@ void input() {
 	}
 	//fps
 	cout << "FPS : " << GetFPS() << endl;
+
+	if (IsKeyDown(KEY_DOWN)) {
+		_x_rotation += 5;
+
+	}
+	if (IsKeyDown(KEY_UP)) {
+		_x_rotation -= 5;
+	}
+
+	if (IsKeyDown(KEY_RIGHT)) {
+		_y_rotation += 5;
+	}
+
+	if (IsKeyDown(KEY_LEFT)) {
+		_y_rotation -= 5;
+	}
+
 }
 void update() {
 
@@ -438,7 +488,11 @@ void render() {
 	
 	for (int x = -CanvasWidth / 2; x <= CanvasWidth / 2; x++) {
 		for (int y = -CanvasHeight / 2; y <= CanvasHeight / 2; y++) {
-			D = CanvasCoordstoViewportCoords(x, y);
+			Vector3 ViewportCoords = CanvasCoordstoViewportCoords(x, y);
+			//_x_rotation += 0.000001;
+
+			D = Vector3Transform(Vector3Transform(ViewportCoords, X_Rotation(DEG2RAD * _x_rotation)),Y_Rotation(DEG2RAD * _y_rotation));
+		
 			color = TraceRay(O,D,1,INFINITY);
 			//cout << "R: " << color.r << "G: " << color.g << "B: " << color.b << "A: " << color.a << endl;
 			DrawPixelCenter(x, y, color);
