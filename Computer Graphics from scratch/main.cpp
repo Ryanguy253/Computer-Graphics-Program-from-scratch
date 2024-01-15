@@ -7,6 +7,14 @@
 //issues
 // solved the discriminant being always 0 -> floating point inaccuracy, need to use epsilon
 
+// use translation matrix
+// add reflections
+// add basic UI
+// add coordinate system and system for creating spheres
+// add good documentation
+//make raylib detect graphics card
+
+
 /* second issue : 
 			no copy construtcor
 			closest_sphere.center.x = _spheres[i].center.x;
@@ -68,6 +76,7 @@ struct Sphere {
 	Color color;
 	int specular;
 };
+
 //initiliase sphere
 Sphere sphere1 { {0,-1,3},1.0,{255,0,0,255},50 };
 //sphere1.center = { 0,-1,3 };
@@ -92,7 +101,7 @@ Sphere sphere4{ {0,-5001,0},5000.0,{65,152,10,255},10 };
 
 //sphere array
 #define SPHERES 4
-Sphere _spheres[SPHERES] = {sphere1,sphere2,sphere3,sphere4};
+Sphere _spheres[SPHERES] = { sphere1,sphere2,sphere3,sphere4};
 
 // light
 // 1 ambient
@@ -110,8 +119,8 @@ struct Light {
 //Light light_ambient{ 1,0.2,{0} ,{0} };
 //Light light_point{ 2,0.6,{2,1,0},{0} };
 //Light light_directional{ 3,0.2,{0},{1,4,4} };
-Light light_ambient{ 1,0.5,{0} ,{0} };
-Light light_point1{ 2,0.2,{-2,1,0},{0} };
+Light light_ambient{ 1,0.1,{0} ,{0} };
+Light light_point1{ 2,0.5,{-2,1,0},{0} };
 Light light_point2{ 3,0.3,{0},{0,3,0} };
 Light light_directional{ 0,0.1,{0},{1,4,4} };
 
@@ -159,6 +168,19 @@ Matrix X_Rotation (float B)
 float _x_rotation = 0;
 float _y_rotation = 0;
 float _z_rotation = 0 ;
+
+//translation matrix
+float tx = 0;
+float ty = 0;
+float tz = 0;
+
+Matrix Translation(float tx, float ty, float tz) {
+	return Matrix{ 1,0,0,tx,
+				  0,1,0,ty,
+				  0,0,1,tz,
+				  0,0,0,1
+	};
+}
 
 void initialise() {
 	InitWindow(window_width, window_height, "Graphics Engine");
@@ -441,25 +463,31 @@ void quit() {
 }
 void input() {
 	if (IsKeyDown(KEY_W)) {
-		O.z += 1;
+		O.z += cos(DEG2RAD * _y_rotation);  // Update Z based on the rotation
+		O.x += sin(DEG2RAD * _y_rotation);  // Update X based on the rotation
 	}
 	if (IsKeyDown(KEY_S)) {
-		O.z -= 1;
+		O.z -= cos(DEG2RAD * _y_rotation);
+		O.x -= sin(DEG2RAD * _y_rotation);
 	}
 	if (IsKeyDown(KEY_A)) {
-		O.x -= 1;
+		O.x -= cos(DEG2RAD * _y_rotation);
+		O.z += sin(DEG2RAD * _y_rotation);
 	}
 	if (IsKeyDown(KEY_D)) {
-		O.x += 1;
+		O.x += cos(DEG2RAD * _y_rotation);
+		O.z -= sin(DEG2RAD * _y_rotation);
 	}
 	if (IsKeyDown(KEY_SPACE)) {
-		O.y += 1;
+		O.y += 0.1;
 	}
 	if (IsKeyDown(KEY_LEFT_SHIFT)) {
-		O.y -= 1;
+		O.y -= 0.1;
 	}
+
 	//fps
-	cout << "FPS : " << GetFPS() << endl;
+	//cout << "FPS : " << GetFPS() << endl;
+	cout << "Camera Position: (" << O.x << ", " << O.y << ", " << O.z << ")" << endl;
 
 	if (IsKeyDown(KEY_DOWN)) {
 		_x_rotation += 5;
@@ -485,13 +513,14 @@ void render() {
 	BeginDrawing();
 	//ClearBackground(BGcolour);
 	
-	
 	for (int x = -CanvasWidth / 2; x <= CanvasWidth / 2; x++) {
 		for (int y = -CanvasHeight / 2; y <= CanvasHeight / 2; y++) {
 			Vector3 ViewportCoords = CanvasCoordstoViewportCoords(x, y);
 			//_x_rotation += 0.000001;
-
-			D = Vector3Transform(Vector3Transform(ViewportCoords, X_Rotation(DEG2RAD * _x_rotation)),Y_Rotation(DEG2RAD * _y_rotation));
+			//D = Vector3Transform(ViewportCoords, Translation(tx, ty, tz));
+			D =	Vector3Transform(Vector3Transform(Vector3Transform(ViewportCoords, Translation(tx, ty, tz)), X_Rotation(DEG2RAD * _x_rotation)), Y_Rotation(DEG2RAD * _y_rotation));
+			//D = Vector3Transform(Vector3Transform(ViewportCoords, X_Rotation(DEG2RAD * _x_rotation)), Y_Rotation(DEG2RAD * _y_rotation));
+			
 		
 			color = TraceRay(O,D,1,INFINITY);
 			//cout << "R: " << color.r << "G: " << color.g << "B: " << color.b << "A: " << color.a << endl;
@@ -501,12 +530,6 @@ void render() {
 
 	EndDrawing();
 }
-
-
-
-
-
-
 
 int main() {
 	initialise();
