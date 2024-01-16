@@ -7,8 +7,8 @@
 //issues
 // solved the discriminant being always 0 -> floating point inaccuracy, need to use epsilon
 
-// use translation matrix
 // add reflections
+
 // add basic UI
 // add coordinate system and system for creating spheres
 // add good documentation
@@ -169,19 +169,14 @@ float _x_rotation = 0;
 float _y_rotation = 0;
 float _z_rotation = 0 ;
 
-//translation matrix
-float tx = 0;
-float ty = 0;
-float tz = 0;
-
-Matrix Translation(float tx, float ty, float tz) {
-	return Matrix{ 1,0,0,tx,
-				  0,1,0,ty,
-				  0,0,1,tz,
-				  0,0,0,1
-	};
+//UI
+bool drawUI = false;
+void DrawUI() {
+	DrawFPS(18, 20);
+	DrawText(TextFormat("Camera Position : %.2f , %.2f, %.2f ", O.x, O.y, O.z), 20, 40, 20, BLACK);
+	DrawText(TextFormat("Camera Rotation (Degrees) : %.2f , %.2f, %.2f ", fmod(_x_rotation,365.0f), fmod(_y_rotation, 365.0f), fmod(_z_rotation, 365.0f)), 20, 60, 20, BLACK);
 }
-
+//
 void initialise() {
 	InitWindow(window_width, window_height, "Graphics Engine");
 }
@@ -455,9 +450,6 @@ Color TraceRay(Vector3 O, Vector3 D, float t_min, float t_max) {
 	return closest_sphere.color;
 }
 
-
-
-
 void quit() {
 	CloseWindow();
 }
@@ -479,15 +471,15 @@ void input() {
 		O.z -= sin(DEG2RAD * _y_rotation);
 	}
 	if (IsKeyDown(KEY_SPACE)) {
-		O.y += 0.1;
+		O.y += 1;
 	}
 	if (IsKeyDown(KEY_LEFT_SHIFT)) {
-		O.y -= 0.1;
+		O.y -= 1;
 	}
 
 	//fps
 	//cout << "FPS : " << GetFPS() << endl;
-	cout << "Camera Position: (" << O.x << ", " << O.y << ", " << O.z << ")" << endl;
+	//cout << "Camera Position: (" << O.x << ", " << O.y << ", " << O.z << ")" << endl;
 
 	if (IsKeyDown(KEY_DOWN)) {
 		_x_rotation += 5;
@@ -504,28 +496,27 @@ void input() {
 	if (IsKeyDown(KEY_LEFT)) {
 		_y_rotation -= 5;
 	}
-
+	if (IsKeyPressed(KEY_Q)) {
+		drawUI = !drawUI;
+	}
 }
 void update() {
 
 }
 void render() {
 	BeginDrawing();
-	//ClearBackground(BGcolour);
 	
 	for (int x = -CanvasWidth / 2; x <= CanvasWidth / 2; x++) {
 		for (int y = -CanvasHeight / 2; y <= CanvasHeight / 2; y++) {
 			Vector3 ViewportCoords = CanvasCoordstoViewportCoords(x, y);
-			//_x_rotation += 0.000001;
-			//D = Vector3Transform(ViewportCoords, Translation(tx, ty, tz));
-			D =	Vector3Transform(Vector3Transform(Vector3Transform(ViewportCoords, Translation(tx, ty, tz)), X_Rotation(DEG2RAD * _x_rotation)), Y_Rotation(DEG2RAD * _y_rotation));
-			//D = Vector3Transform(Vector3Transform(ViewportCoords, X_Rotation(DEG2RAD * _x_rotation)), Y_Rotation(DEG2RAD * _y_rotation));
 			
-		
+			D =	Vector3Transform(Vector3Transform(ViewportCoords, X_Rotation(DEG2RAD * _x_rotation)), Y_Rotation(DEG2RAD * _y_rotation));
 			color = TraceRay(O,D,1,INFINITY);
-			//cout << "R: " << color.r << "G: " << color.g << "B: " << color.b << "A: " << color.a << endl;
 			DrawPixelCenter(x, y, color);
 		}
+	}
+	if (drawUI) {
+		DrawUI();
 	}
 
 	EndDrawing();
