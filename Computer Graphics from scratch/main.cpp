@@ -7,13 +7,20 @@
 //issues
 // solved the discriminant being always 0 -> floating point inaccuracy, need to use epsilon
 
+//issues rotation stays at - if i rotate too much
+
 // add reflections
 
+// add minimap
 // add basic UI
-// add coordinate system and system for creating spheres
+// add spheres editor
 // add good documentation
-//make raylib detect graphics card
+// add light editor
+// show light sources in UI and highlight light
+// add delete sphere
 
+//make raylib detect graphics card //done
+//add spawning sphere system ..done
 
 /* second issue : 
 			no copy construtcor
@@ -96,12 +103,13 @@ Sphere sphere3{ {-2,0,4},1.0,{0,255,0,255}, 100 };
 //sphere3.color = { 0, 255, 0 ,255 }; // Green*/
 //sphere3.specular = 100 // somewhat shiny
 
-Sphere sphere4{ {0,-5001,0},5000.0,{65,152,10,255},10 };
+//Sphere sphere4{ {0,-5001,0},5000.0,{65,152,10,255},10 };
 
 
 //sphere array
-#define SPHERES 4
-Sphere _spheres[SPHERES] = { sphere1,sphere2,sphere3,sphere4};
+#define SPHERES 10
+Sphere _spheres[SPHERES] = { sphere1,sphere2,sphere3 };
+int _spheresCount = 3;
 
 // light
 // 1 ambient
@@ -122,6 +130,7 @@ struct Light {
 Light light_ambient{ 1,0.1,{0} ,{0} };
 Light light_point1{ 2,0.5,{-2,1,0},{0} };
 Light light_point2{ 3,0.3,{0},{0,3,0} };
+
 Light light_directional{ 0,0.1,{0},{1,4,4} };
 
 //light array
@@ -175,7 +184,11 @@ void DrawUI() {
 	DrawFPS(18, 20);
 	DrawText(TextFormat("Camera Position : %.2f , %.2f, %.2f ", O.x, O.y, O.z), 20, 40, 20, BLACK);
 	DrawText(TextFormat("Camera Rotation (Degrees) : %.2f , %.2f, %.2f ", fmod(_x_rotation,365.0f), fmod(_y_rotation, 365.0f), fmod(_z_rotation, 365.0f)), 20, 60, 20, BLACK);
+	DrawText(TextFormat("Spawn Sphere (Press B) MAX : %d / %d ",_spheresCount ,SPHERES), 20, 80, 20, BLACK);
+	DrawText(TextFormat("Press C to cycle between spheres (Current Sphere: Sphere %d )",_sphereSelection+1),20,100,20,BLACK);
 }
+int _sphereSelection = 0;
+
 //
 void initialise() {
 	InitWindow(window_width, window_height, "Graphics Engine");
@@ -488,17 +501,34 @@ void input() {
 	if (IsKeyDown(KEY_UP)) {
 		_x_rotation -= 5;
 	}
-
 	if (IsKeyDown(KEY_RIGHT)) {
 		_y_rotation += 5;
 	}
-
 	if (IsKeyDown(KEY_LEFT)) {
 		_y_rotation -= 5;
 	}
+	//draw UI
 	if (IsKeyPressed(KEY_Q)) {
 		drawUI = !drawUI;
 	}
+
+	//spawn Sphere
+	if (IsKeyPressed(KEY_B) && drawUI && _spheresCount<SPHERES) {
+		//create sphere object at camera position
+		Sphere temp = { 0 };
+		temp.center.x = O.x;
+		temp.center.y = O.y;
+		temp.center.z = O.z;
+		
+		temp.color = { 255,255,255,255 };
+
+		temp.radius = 1.0;
+		temp.specular = 100;
+
+		_spheres[_spheresCount] = temp;
+		_spheresCount++;
+	}
+
 }
 void update() {
 
