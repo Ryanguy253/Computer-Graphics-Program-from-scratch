@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include "raymath.h"
+#include "raygui.h"
 #include <stdio.h>
 #include<iostream>
 #include <math.h>
@@ -179,14 +180,30 @@ float _z_rotation = 0 ;
 //UI
 Sphere* currentSphereSelected = &_spheres[0];
 int currentSphereIndex = 0;
-bool drawUI = false;
+bool drawUI = true;
+bool drawEditor = true;
 void DrawUI() {
 	DrawFPS(18, 20);
 	DrawText(TextFormat("Camera Position : %.2f , %.2f, %.2f ", O.x, O.y, O.z), 20, 40, 20, BLACK);
 	DrawText(TextFormat("Camera Rotation (Degrees) : %.2f , %.2f, %.2f ", fmod(_x_rotation,365.0f), fmod(_y_rotation, 365.0f), fmod(_z_rotation, 365.0f)), 20, 60, 20, BLACK);
 	DrawText(TextFormat("Spawn Sphere (Press B) MAX : %d / %d ",_spheresCount ,SPHERES), 20, 80, 20, BLACK);
-
 	DrawText(TextFormat("Press C to cycle between spheres (Current Sphere: (X : %.2f, Y : %.2f, Z : %.2f))",currentSphereSelected->center.x, currentSphereSelected->center.y, currentSphereSelected->center.z),20,100,20,BLACK);
+	DrawText("Press TAB to toggle editor", 20, 120,20, BLACK);
+
+	if (drawEditor) {
+		Rectangle window{ 20,140,500,300 };
+		GuiPanel(window, "Editor");
+
+		Rectangle radius{ 80,170,200,20 };
+		GuiSlider(radius, "Radius 0.1", "Radius 10", &(currentSphereSelected->radius), 0.1, 10);
+
+		Rectangle specular{ 80,200,200,20 };
+		GuiSpinner(specular, "Specular ", &(currentSphereSelected->specular), 1, 5000,drawEditor);
+
+		Rectangle colour{ 30,230,200,200 };
+		GuiColorPicker(colour, "Colour Picker", &(currentSphereSelected->color));
+	}
+
 }
 Color tempcolor = WHITE;
 //
@@ -506,7 +523,13 @@ void input() {
 	//draw UI
 	if (IsKeyPressed(KEY_Q)) {
 		drawUI = !drawUI;
+
 	}
+	//draw editor
+	if (drawUI && IsKeyPressed(KEY_TAB)) {
+		drawEditor = !drawEditor;
+	}
+
 
 	//spawn Sphere
 	if (IsKeyPressed(KEY_B) && drawUI && _spheresCount<SPHERES) {
@@ -534,20 +557,12 @@ void input() {
 		}
 		currentSphereSelected = &_spheres[currentSphereIndex];
 		currentSphereSelected->isSelected = true;
-			
-		
 	}
-
+	
 }
 
 void update() {
-	for (int i = 0; i < _spheresCount; i++) {
-		if (_spheres[i].isSelected) {
-			_spheres[i].color.r == 0;
-			_spheres[i].color.g == 0;
-			_spheres[i].color.b == 0; 
-		}
-	}
+	
 }
 void render() {
 	BeginDrawing();
