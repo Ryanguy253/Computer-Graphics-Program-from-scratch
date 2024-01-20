@@ -19,9 +19,6 @@
 // show light sources in UI and highlight light
 // add delete sphere
 
-//make raylib detect graphics card //done
-//add spawning sphere system ..done
-
 /* second issue : 
 			no copy construtcor
 			closest_sphere.center.x = _spheres[i].center.x;
@@ -82,6 +79,7 @@ struct Sphere {
 	float radius;
 	Color color;
 	int specular;
+	bool isSelected;
 };
 
 //initiliase sphere
@@ -108,7 +106,7 @@ Sphere sphere3{ {-2,0,4},1.0,{0,255,0,255}, 100 };
 
 //sphere array
 #define SPHERES 10
-Sphere _spheres[SPHERES] = { sphere1,sphere2,sphere3 };
+Sphere _spheres[SPHERES] = { sphere1,sphere2,sphere3};
 int _spheresCount = 3;
 
 // light
@@ -127,8 +125,8 @@ struct Light {
 //Light light_ambient{ 1,0.2,{0} ,{0} };
 //Light light_point{ 2,0.6,{2,1,0},{0} };
 //Light light_directional{ 3,0.2,{0},{1,4,4} };
-Light light_ambient{ 1,0.1,{0} ,{0} };
-Light light_point1{ 2,0.5,{-2,1,0},{0} };
+Light light_ambient{ 1,0.5,{0} ,{0} };
+Light light_point1{ 2,0.2,{-2,1,0},{0} };
 Light light_point2{ 3,0.3,{0},{0,3,0} };
 
 Light light_directional{ 0,0.1,{0},{1,4,4} };
@@ -179,16 +177,18 @@ float _y_rotation = 0;
 float _z_rotation = 0 ;
 
 //UI
+Sphere* currentSphereSelected = &_spheres[0];
+int currentSphereIndex = 0;
 bool drawUI = false;
 void DrawUI() {
 	DrawFPS(18, 20);
 	DrawText(TextFormat("Camera Position : %.2f , %.2f, %.2f ", O.x, O.y, O.z), 20, 40, 20, BLACK);
 	DrawText(TextFormat("Camera Rotation (Degrees) : %.2f , %.2f, %.2f ", fmod(_x_rotation,365.0f), fmod(_y_rotation, 365.0f), fmod(_z_rotation, 365.0f)), 20, 60, 20, BLACK);
 	DrawText(TextFormat("Spawn Sphere (Press B) MAX : %d / %d ",_spheresCount ,SPHERES), 20, 80, 20, BLACK);
-	DrawText(TextFormat("Press C to cycle between spheres (Current Sphere: Sphere %d )",_sphereSelection+1),20,100,20,BLACK);
-}
-int _sphereSelection = 0;
 
+	DrawText(TextFormat("Press C to cycle between spheres (Current Sphere: (X : %.2f, Y : %.2f, Z : %.2f))",currentSphereSelected->center.x, currentSphereSelected->center.y, currentSphereSelected->center.z),20,100,20,BLACK);
+}
+Color tempcolor = WHITE;
 //
 void initialise() {
 	InitWindow(window_width, window_height, "Graphics Engine");
@@ -490,10 +490,6 @@ void input() {
 		O.y -= 1;
 	}
 
-	//fps
-	//cout << "FPS : " << GetFPS() << endl;
-	//cout << "Camera Position: (" << O.x << ", " << O.y << ", " << O.z << ")" << endl;
-
 	if (IsKeyDown(KEY_DOWN)) {
 		_x_rotation += 5;
 
@@ -529,9 +525,29 @@ void input() {
 		_spheresCount++;
 	}
 
-}
-void update() {
+	if (IsKeyPressed(KEY_C) && drawUI) {
+		
+		currentSphereSelected->isSelected = false;
+		currentSphereIndex++;
+		if (currentSphereIndex >= _spheresCount) {
+			currentSphereIndex = 0; 
+		}
+		currentSphereSelected = &_spheres[currentSphereIndex];
+		currentSphereSelected->isSelected = true;
+			
+		
+	}
 
+}
+
+void update() {
+	for (int i = 0; i < _spheresCount; i++) {
+		if (_spheres[i].isSelected) {
+			_spheres[i].color.r == 0;
+			_spheres[i].color.g == 0;
+			_spheres[i].color.b == 0; 
+		}
+	}
 }
 void render() {
 	BeginDrawing();
