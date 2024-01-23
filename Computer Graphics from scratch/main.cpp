@@ -13,12 +13,12 @@
 // add reflections
 
 // add minimap
-// add basic UI
-// add spheres editor
+// add flashing spheres when selected
 // add good documentation
 // add light editor
 // show light sources in UI and highlight light
 // add delete sphere
+// add save file
 
 /* second issue : 
 			no copy construtcor
@@ -84,31 +84,45 @@ struct Sphere {
 };
 
 //initiliase sphere
-Sphere sphere1 { {0,-1,3},1.0,{255,0,0,255},50 };
+// KIRBY
+//body
+Sphere kirby1 { {0,0,0},1.0,{239,182,212,255},100 };
 //sphere1.center = { 0,-1,3 };
 //sphere1.radius = 1.0;
 //sphere1.color = { 255,0,0,255 }; //red
 //sphere1.specular = 500 //shiny
-
-Sphere sphere2{ {2,0,4},1.0,{0,0,255,255},50 };
+//hands
+Sphere kirby2{ {0.95,0.15,0},0.3,{239,182,212,255},100 };
 //sphere2.center = { 2, 0, 4 };
 //sphere2.radius = 1.0;
 //sphere2.color = { 0, 0, 255 ,255 };// Blue
 //sphere2.specular = 500//shiny
-
-Sphere sphere3{ {-2,0,4},1.0,{0,255,0,255}, 100 };
+Sphere kirby3{ {-0.95,0.15,0},0.3,{239,182,212,255}, 100 };
 //sphere3.center = { -2, 0, 4 };
 //sphere3.radius = 1.0;
 //sphere3.color = { 0, 255, 0 ,255 }; // Green*/
 //sphere3.specular = 100 // somewhat shiny
+//grass
+Sphere kirby4{ {0,-5001,0},5000.0,{65,152,10,255},10 };
+//feet
+Sphere kirby5{ {0.85,-0.75,0},0.4,{215,72,148,255},100 };
+Sphere kirby6{ {-0.85,-0.75,0},0.4,{215,72,148,255},100 };
+//face
+//eye
+Sphere kirby7{ {0.3,0.25,-0.8},0.2,{0,0,0,255},100 };
+Sphere kirby8{ {-0.3,0.25,-0.8},0.2,{0,0,0,255},100 };
+Sphere kirby10{ {-0.3,0.25,-1},0.1,{255,255,255,255},100 };
+Sphere kirby11{ {0.3,0.25,-1},0.1,{255,255,255,255},100 };
+//mouth
+Sphere kirby9{ {0,0.15,-0.8},0.2,{139,0,0,255},50 };
 
-//Sphere sphere4{ {0,-5001,0},5000.0,{65,152,10,255},10 };
-
+Sphere sphere1{ {0,-1,3},1.0,{255,0,0,255},500 };
 
 //sphere array
-#define SPHERES 10
-Sphere _spheres[SPHERES] = { sphere1,sphere2,sphere3};
-int _spheresCount = 3;
+
+#define SPHERES 20
+Sphere _spheres[SPHERES] = {sphere1};
+int _spheresCount = 1;
 
 // light
 // 1 ambient
@@ -127,8 +141,8 @@ struct Light {
 //Light light_point{ 2,0.6,{2,1,0},{0} };
 //Light light_directional{ 3,0.2,{0},{1,4,4} };
 Light light_ambient{ 1,0.5,{0} ,{0} };
-Light light_point1{ 2,0.2,{-2,1,0},{0} };
-Light light_point2{ 3,0.3,{0},{0,3,0} };
+Light light_point1{ 2,0.1,{2,1,0},{0} };
+Light light_point2{ 0,0.8,{0},{0,3,0} };
 
 Light light_directional{ 0,0.1,{0},{1,4,4} };
 
@@ -180,15 +194,16 @@ float _z_rotation = 0 ;
 //UI
 Sphere* currentSphereSelected = &_spheres[0];
 int currentSphereIndex = 0;
-bool drawUI = true;
-bool drawEditor = true;
+bool drawUI = false;
+bool drawEditor = false;
 void DrawUI() {
 	DrawFPS(18, 20);
 	DrawText(TextFormat("Camera Position : %.2f , %.2f, %.2f ", O.x, O.y, O.z), 20, 40, 20, BLACK);
 	DrawText(TextFormat("Camera Rotation (Degrees) : %.2f , %.2f, %.2f ", fmod(_x_rotation,365.0f), fmod(_y_rotation, 365.0f), fmod(_z_rotation, 365.0f)), 20, 60, 20, BLACK);
 	DrawText(TextFormat("Spawn Sphere (Press B) MAX : %d / %d ",_spheresCount ,SPHERES), 20, 80, 20, BLACK);
 	DrawText(TextFormat("Press C to cycle between spheres (Current Sphere: (X : %.2f, Y : %.2f, Z : %.2f))",currentSphereSelected->center.x, currentSphereSelected->center.y, currentSphereSelected->center.z),20,100,20,BLACK);
-	DrawText("Press TAB to toggle editor", 20, 120,20, BLACK);
+	DrawText("Press X to delete sphere ", 20,120,20,BLACK);
+	DrawText("Press TAB to toggle editor", 20, 140,20, BLACK);
 
 	if (drawEditor) {
 		Rectangle window{ 20,140,500,300 };
@@ -207,6 +222,26 @@ void DrawUI() {
 }
 Color tempcolor = WHITE;
 //
+
+// Remove Sphere and sort
+void deleteSphere() {
+	*(currentSphereSelected) = { 0 };
+	_spheresCount -= 1;
+
+	// arrange array
+	for (int i = 0; i < SPHERES - 1; i++) {
+		if (_spheres[i].radius == 0) {
+			for (int x = i; x < SPHERES - 1; x++) {
+				_spheres[x] = _spheres[x + 1];
+			}
+
+			// After shifting elements, the last element needs to be set to zero
+			_spheres[SPHERES - 1] = { 0 };
+		}
+	}
+
+}
+
 void initialise() {
 	InitWindow(window_width, window_height, "Graphics Engine");
 }
@@ -559,6 +594,11 @@ void input() {
 		currentSphereSelected->isSelected = true;
 	}
 	
+	if (IsKeyPressed(KEY_X) && drawUI&&_spheresCount>=0) {
+		deleteSphere();
+	}
+
+
 }
 
 void update() {
