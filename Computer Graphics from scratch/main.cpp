@@ -13,12 +13,14 @@
 // add reflections
 
 // add minimap
-// add flashing spheres when selected
 // add good documentation
 // add light editor
 // show light sources in UI and highlight light
-// add delete sphere
 // add save file
+
+// added flashing spheres when selected
+
+
 
 /* second issue : 
 			no copy construtcor
@@ -121,8 +123,8 @@ Sphere sphere1{ {0,-1,3},1.0,{255,0,0,255},500 };
 //sphere array
 
 #define SPHERES 20
-Sphere _spheres[SPHERES] = {sphere1};
-int _spheresCount = 1;
+Sphere _spheres[SPHERES] = {kirby1,kirby2,kirby3,kirby4,kirby5,kirby6,kirby7,kirby8,kirby9,kirby10,kirby11};
+int _spheresCount = 11;
 
 // light
 // 1 ambient
@@ -213,14 +215,47 @@ void DrawUI() {
 		GuiSlider(radius, "Radius 0.1", "Radius 10", &(currentSphereSelected->radius), 0.1, 10);
 
 		Rectangle specular{ 80,200,200,20 };
-		GuiSpinner(specular, "Specular ", &(currentSphereSelected->specular), 1, 5000,drawEditor);
+		GuiSpinner(specular, "Specular ", &(currentSphereSelected->specular), 1, 5000, drawEditor);
 
 		Rectangle colour{ 30,230,200,200 };
 		GuiColorPicker(colour, "Colour Picker", &(currentSphereSelected->color));
 	}
-
 }
 Color tempcolor = WHITE;
+
+void selectionFlash() {
+	
+	static Sphere* lastSelectedSphere = nullptr;
+	static Color originalColour;
+
+	// Check if the selected sphere has changed
+	if (currentSphereSelected != lastSelectedSphere) {
+		// Update the last selected sphere
+		lastSelectedSphere = currentSphereSelected;
+
+		// Copy original colour only once when the sphere changes
+		originalColour = currentSphereSelected->color;
+	}
+
+	// Flashing logic
+	int interval = 1; // Adjust as needed
+	int time = GetTime();
+
+	if (time % (interval * 2) < interval) {
+		// Toggle between the original color and white
+		if (currentSphereSelected->color.r == 255 && currentSphereSelected->color.g == 255 && currentSphereSelected->color.b == 255 && currentSphereSelected->color.a == 255) {
+			currentSphereSelected->color = originalColour;
+		}
+		else {
+			currentSphereSelected->color = { 57, 255, 20, 255 };
+		}
+	}
+	else {
+		// Reset to the original color outside the flashing interval
+		currentSphereSelected->color = originalColour;
+	}
+
+}
 //
 
 // Remove Sphere and sort
@@ -618,6 +653,7 @@ void render() {
 	}
 	if (drawUI) {
 		DrawUI();
+		selectionFlash();
 	}
 
 	EndDrawing();
