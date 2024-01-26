@@ -198,6 +198,7 @@ Sphere* currentSphereSelected = &_spheres[0];
 int currentSphereIndex = 0;
 bool drawUI = false;
 bool drawEditor = false;
+bool changeColour = false;
 void DrawUI() {
 	DrawFPS(18, 20);
 	DrawText(TextFormat("Camera Position : %.2f , %.2f, %.2f ", O.x, O.y, O.z), 20, 40, 20, BLACK);
@@ -208,8 +209,11 @@ void DrawUI() {
 	DrawText("Press TAB to toggle editor", 20, 140,20, BLACK);
 
 	if (drawEditor) {
+
 		Rectangle window{ 20,140,500,300 };
 		GuiPanel(window, "Editor");
+
+		DrawText("Press F to confirm colour change", 80, 140, 20, BLACK);
 
 		Rectangle radius{ 80,170,200,20 };
 		GuiSlider(radius, "Radius 0.1", "Radius 10", &(currentSphereSelected->radius), 0.1, 10);
@@ -228,13 +232,14 @@ void selectionFlash() {
 	static Sphere* lastSelectedSphere = nullptr;
 	static Color originalColour;
 
-	// Check if the selected sphere has changed
-	if (currentSphereSelected != lastSelectedSphere) {
+	// Check if the selected sphere has changed or colour has changed
+	if (currentSphereSelected != lastSelectedSphere || changeColour) {
 		// Update the last selected sphere
 		lastSelectedSphere = currentSphereSelected;
 
 		// Copy original colour only once when the sphere changes
 		originalColour = currentSphereSelected->color;
+		changeColour = false;
 	}
 
 	// Flashing logic
@@ -636,6 +641,9 @@ void input() {
 		deleteSphere();
 	}
 
+	if (IsKeyPressed(KEY_F) && drawEditor) {
+		changeColour = true;
+	}
 
 }
 
@@ -656,6 +664,8 @@ void render() {
 	}
 	if (drawUI) {
 		DrawUI();
+	}
+	if (drawUI && !drawEditor) {
 		selectionFlash();
 	}
 
