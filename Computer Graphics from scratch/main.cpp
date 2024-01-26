@@ -123,8 +123,8 @@ Sphere sphere1{ {0,-1,3},1.0,{255,0,0,255},500 };
 //sphere array
 
 #define SPHERES 20
-Sphere _spheres[SPHERES] = {kirby1,kirby2,kirby3,kirby4,kirby5,kirby6,kirby7,kirby8,kirby9,kirby10,kirby11};
-int _spheresCount = 11;
+Sphere _spheres[SPHERES] = {sphere1};
+int _spheresCount = 1;
 
 // light
 // 1 ambient
@@ -149,7 +149,7 @@ Light light_point2{ 0,0.8,{0},{0,3,0} };
 Light light_directional{ 0,0.1,{0},{1,4,4} };
 
 //light array
-#define LIGHTS 4
+#define LIGHTS 10
 //Light _lights[LIGHTS] = { light_ambient,light_point,light_directional };
 Light _lights[LIGHTS] = { light_ambient,light_point1,light_point2,light_directional };
 
@@ -242,8 +242,8 @@ void selectionFlash() {
 	int time = GetTime();
 
 	if (time % (interval * 2) < interval) {
-		// Toggle between the original color and white
-		if (currentSphereSelected->color.r == 255 && currentSphereSelected->color.g == 255 && currentSphereSelected->color.b == 255 && currentSphereSelected->color.a == 255) {
+		// Toggle between the original color and neon
+		if (currentSphereSelected->color.r == 57 && currentSphereSelected->color.g == 255 && currentSphereSelected->color.b == 20 && currentSphereSelected->color.a == 255) {
 			currentSphereSelected->color = originalColour;
 		}
 		else {
@@ -618,7 +618,10 @@ void input() {
 		_spheresCount++;
 	}
 
-	if (IsKeyPressed(KEY_C) && drawUI) {
+	int delay = 2;
+	int time = GetTime();
+
+	if (IsKeyPressed(KEY_C) && drawUI && (time % delay == 1)) {
 		
 		currentSphereSelected->isSelected = false;
 		currentSphereIndex++;
