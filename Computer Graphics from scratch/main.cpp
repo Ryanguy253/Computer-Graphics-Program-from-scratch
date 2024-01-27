@@ -85,8 +85,8 @@ struct Sphere {
 	float reflective;
 };
 //reflections
-
-const int recursion_depth = 3;
+bool drawReflection = false;
+const int recursion_depth = 2;
 
 //initiliase sphere
 // KIRBY
@@ -156,7 +156,7 @@ Light light_point2{ 3,0.8,{0},{0,3,0} };
 Light light_directional{ 3,0.1,{0},{1,4,4} };
 
 //light array
-#define LIGHTS 10
+#define LIGHTS 3
 //Light _lights[LIGHTS] = { light_ambient,light_point,light_directional };
 Light _lights[LIGHTS] = {light_ambient,light_point1,light_directional};
 int _lightsCount = 3;
@@ -239,9 +239,11 @@ void DrawUI() {
 	DrawText("Press TAB to toggle editor", 20, 140,20, BLACK);
 	DrawText("Press L to cycle between light sources", 20, 160, 20, BLACK);
 	DrawText(TextFormat("(%s ,Intensity:%.2f, Position(X:%.2f,Y:%.2f,Z:%.2f, Direction(X:%.2f,Y:%.2f,Z:%.2f)))", returnLighttype(currentLightSelected),currentLightSelected->intensity,currentLightSelected->position.x,currentLightSelected->position.y,currentLightSelected->position.z,currentLightSelected->direction.x, currentLightSelected->direction.y, currentLightSelected->direction.z),20, 180, 20, BLACK);
+	DrawText("Press R to toggle Reflections", 20, 200, 20, BLACK);
+
 	if (drawEditor) {
 
-		Rectangle window{ 20,280,500,300 };
+		Rectangle window{ 20,280,500,400 };
 		GuiPanel(window, "Editor");
 
 		DrawText("Press F to confirm colour change", 80, 280, 20, BLACK);
@@ -252,7 +254,10 @@ void DrawUI() {
 		Rectangle specular{ 80,340,200,20 };
 		GuiSpinner(specular, "Specular ", &(currentSphereSelected->specular), 1, 5000, drawEditor);
 
-		Rectangle colour{ 30,370,200,200 };
+		Rectangle reflection{ 110,370,200,20 };
+		GuiSlider(reflection, "Reflection 0.0","Reflection 1.0" ,& (currentSphereSelected->reflective), 0, 1.0);
+
+		Rectangle colour{ 30,400,200,200 };
 		GuiColorPicker(colour, "Colour Picker", &(currentSphereSelected->color));
 	}
 
@@ -437,7 +442,10 @@ void ClosestIntersection(Vector3 O, Vector3 D, float t_min, float t_max) {
 			//cout << "Cloest_t : " << closest_t<<endl;
 
 			closest_sphere.specular = _spheres[i].specular;
-			closest_sphere.reflective = _spheres[i].reflective;
+			
+			if (drawReflection) {
+				closest_sphere.reflective = _spheres[i].reflective;
+			}
 		}
 
 		if (t2 > t_min && t2 < t_max && t2 < closest_t) {
@@ -458,7 +466,9 @@ void ClosestIntersection(Vector3 O, Vector3 D, float t_min, float t_max) {
 
 			closest_sphere.specular = _spheres[i].specular;
 
-			closest_sphere.reflective = _spheres[i].reflective;
+			if (drawReflection) {
+				closest_sphere.reflective = _spheres[i].reflective;
+			}
 		}
 	}
 }
@@ -512,14 +522,14 @@ void ClosestShadowIntersection(Vector3 O, Vector3 D, float t_min, float t_max) {
 }
 
 Vector3 ReflectRay(Vector3 R,Vector3 N) {
-	Vector3 _2n_dot_NR;
+	/*Vector3 _2n_dot_NR;
 	Vector3 _2n;
 	Vector3 _2n_dot_NR_minus_R;
 
 	_2n = Vector3Scale(N, 2);
 	_2n_dot_NR = Vector3Scale(_2n, Vector3DotProduct(N, R));
-	_2n_dot_NR_minus_R = Vector3Subtract(_2n_dot_NR, R);
-	return _2n_dot_NR_minus_R;
+	_2n_dot_NR_minus_R = Vector3Subtract(_2n_dot_NR, R);*/
+	return Vector3Subtract(Vector3Scale(N, 2.0f * Vector3DotProduct(N, R)), R);
 
 }
 
@@ -590,7 +600,7 @@ Color TraceRay(Vector3 O, Vector3 D, float t_min, float t_max, int recursion_dep
 	Vector3 P;
 	Vector3 N;
 	Vector3 R;
-	Color reflected_color;
+	
 	Color local_color;
 	float r = 0;
 	
@@ -611,23 +621,31 @@ Color TraceRay(Vector3 O, Vector3 D, float t_min, float t_max, int recursion_dep
 	local_color.g = (unsigned char)Clamp(closest_sphere.color.g * ComputeLighting(P, N,Vector3Negate(D),closest_sphere.specular),0,255);
 	local_color.b = (unsigned char)Clamp(closest_sphere.color.b * ComputeLighting(P, N,Vector3Negate(D),closest_sphere.specular),0,255);
 
+	closest_sphere.color.r = (unsigned char)Clamp(closest_sphere.color.r * ComputeLighting(P, N, Vector3Negate(D), closest_sphere.specular), 0, 255);
+	closest_sphere.color.g = (unsigned char)Clamp(closest_sphere.color.g * ComputeLighting(P, N, Vector3Negate(D), closest_sphere.specular), 0, 255);
+	closest_sphere.color.b = (unsigned char)Clamp(closest_sphere.color.b * ComputeLighting(P, N, Vector3Negate(D), closest_sphere.specular), 0, 255);
+
 	r = closest_sphere.reflective;
 
-	if (recursion_depth <= 0 || r<=0) {
-		return local_color;
+	if (recursion_depth <= 0 || r<=0 || !drawReflection) {
+		return closest_sphere.color;
 	}
 	
-	//compute reflected colour
-	R = ReflectRay(Vector3Negate(D), N);
-	reflected_color = TraceRay(P, R, 0.001, INFINITY, (recursion_depth - 1));
+	if (drawReflection) {
+		Color reflected_color;
+		//compute reflected colour
+		R = ReflectRay(Vector3Negate(D), N);
+		reflected_color = TraceRay(P, R, 0.001, INFINITY, (recursion_depth - 1));
 
-	//clamp values
-	local_color.r = (unsigned char)Clamp(local_color.r * (1 - r) + reflected_color.r * r, 0, 255);
-	local_color.g = (unsigned char)Clamp(local_color.g * (1 - r) + reflected_color.g * r, 0, 255);
-	local_color.b = (unsigned char)Clamp(local_color.b * (1 - r) + reflected_color.b * r, 0, 255);
+		//clamp values
+		local_color.r = (unsigned char)Clamp(local_color.r * (1 - r) + reflected_color.r * r, 0, 255);
+		local_color.g = (unsigned char)Clamp(local_color.g * (1 - r) + reflected_color.g * r, 0, 255);
+		local_color.b = (unsigned char)Clamp(local_color.b * (1 - r) + reflected_color.b * r, 0, 255);
 
-	return local_color;
-	
+		return local_color;
+	}
+
+
 	/*When you multiply the RGB components of the color with the specular reflection intensity, 
 	you might end up with a color that is too dark or saturated, especially if the specular reflection intensity is high.
 	Instead, you should scale the intensity while keeping the color values within a valid range.*/
@@ -739,13 +757,10 @@ void input() {
 		deleteLight();
 	}
 
-
-
-
-
-
-
-
+	if (IsKeyPressed(KEY_R) && drawUI) {
+		drawReflection = !drawReflection;
+		cout << drawReflection << endl;
+	}
 }
 
 void update() {
