@@ -14,15 +14,39 @@ This is [Kirby](https://kirby.nintendo.com/), Raytraced using this program
 
 <img width="502" alt="image" src="https://github.com/Ryanguy253/Computer-Graphics-Program-from-scratch/assets/131997167/46c3e360-e219-4705-95cb-58eaabd8bf8c">
 
+![image](https://github.com/Ryanguy253/Computer-Graphics-Program-from-scratch/assets/131997167/23d1db88-e69f-49aa-8c41-86d104bb952a)
+
 ## Features
 
 - Comprehensive editor for entities that is able to spawn entities and change their attributes as shown below : 
 
-<img width="500" alt="image" src="https://github.com/Ryanguy253/Computer-Graphics-Program-from-scratch/assets/131997167/2959927e-a476-462a-b4c0-b3c87738e54c">
+![image](https://github.com/Ryanguy253/Computer-Graphics-Program-from-scratch/assets/131997167/55c041ba-81f6-4d4c-a36b-aff958d02e58)
 
 - Movable camera manipulated using Vector Rotation Matrices
 
 <img width="502" alt="image" src="https://github.com/Ryanguy253/Computer-Graphics-Program-from-scratch/assets/131997167/8ae42fe6-1b30-4b7b-9980-8f2d15794c76">
+
+## Usage
+**General Controls**
+- WASD to move around
+- Arrow Keys to Look Up,Down,Left and Right
+- Q to toggle editor
+- R to toggle reflection
+  
+**Controls for Spheres**
+- B to spawn sphere
+- C to cycle between spheres (Spheres will flash Neon Green)
+- X to delete sphere
+- TAB to toggle editor (use sliders to change values)
+  
+**Controls for Lights**
+- L to cycle between light sources
+- J to add a light source
+- 1 to change light type to ambient light
+- 2 to change light type to point light
+- U to increase intensity of light
+- I to decrease intensity of light
+- K to delete light source
 
 <add Raytracing Process>
 <add installation section>
