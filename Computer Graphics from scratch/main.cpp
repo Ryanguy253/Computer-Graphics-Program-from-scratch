@@ -5,46 +5,6 @@
 #include<iostream>
 #include <math.h>
 
-//issues
-// solved the discriminant being always 0 -> floating point inaccuracy, need to use epsilon
-
-//issues rotation stays at - if i rotate too much
-
-// add good documentation
-// add light editor
-// show light sources in UI and highlight light
-
-/* second issue : 
-			no copy construtcor
-			closest_sphere.center.x = _spheres[i].center.x;
-			closest_sphere.center.y = _spheres[i].center.y;
-			closest_sphere.center.z = _spheres[i].center.z; //but you have to assign lke this
-
-			closest_sphere.radius = _spheres[i].radius;
-			closest_sphere.color = _spheres[i].color;
-			//cout << "Cloest_t : " << closest_t<<endl;
-		}
-
-		if (t2 > t_min && t2 < t_max && t2 < closest_t) {
-			closest_t = t2;
-			closest_sphere = _spheres[i]; .// you did this originally
-			//cout << "Cloest_t : " << closest_t << endl;
-		}
-
-third issue : when i uncomment cout<< at 
-			if (t2 > t_min && t2 < t_max && t2 < closest_t) {
-			closest_t = t2;
-			closest_sphere = _spheres[i]; .// you did this originally
-			//cout << "Cloest_t : " << closest_t << endl;
-		}
-		the program wont work
-
-		 If you uncomment them and the program stops working, it might be related to the console output buffering 
-		 or the volume of output generated. If you're running the program from an integrated
-		 development environment (IDE), it might have limitations on the amount of console output it can handle.
-		
-*/
-
 using namespace std;
 
 int window_width = 1000;
@@ -81,48 +41,14 @@ bool drawReflection = false;
 const int recursion_depth = 2;
 
 //initiliase sphere
-// KIRBY
-//body
-Sphere kirby1 { {0,0,0},1.0,{239,182,212,255},100 };
-//hands
-Sphere kirby2{ {0.95,0.15,0},0.3,{239,182,212,255},100 };
-Sphere kirby3{ {-0.95,0.15,0},0.3,{239,182,212,255}, 100 };
-//grass
-Sphere kirby4{ {0,-5001,0},5000.0,{65,152,10,255},10,0.1 };
-//feet
-Sphere kirby5{ {0.85,-0.75,0},0.4,{215,72,148,255},100 };
-Sphere kirby6{ {-0.85,-0.75,0},0.4,{215,72,148,255},100 };
-//face
-//eye
-Sphere kirby7{ {0.3,0.25,-0.8},0.2,{0,0,0,255},100 };
-Sphere kirby8{ {-0.3,0.25,-0.8},0.2,{0,0,0,255},100 };
-Sphere kirby10{ {-0.3,0.25,-1},0.1,{255,255,255,255},100 };
-Sphere kirby11{ {0.3,0.25,-1},0.1,{255,255,255,255},100 };
-//mouth
-Sphere kirby9{ {0,0.15,-0.8},0.2,{139,0,0,255},50 };
-
+Sphere sphere4{ {0,-5001,0},5000.0,{65,152,10,255},10,0.1 };
 Sphere sphere1{ {0,-1,3},1.0,{255,0,0,255},500, 0.2};
 Sphere sphere2{ {2, 0, 4},1.0, { 0, 0, 255 ,255 },500,0.2 };
 Sphere sphere3{ { -2, 0, 4 } ,1.0,{ 0, 255, 0 ,255 },100,0.2 };
 
-//sphere1.center = { 0,-1,3 };
-//sphere1.radius = 1.0;
-//sphere1.color = { 255,0,0,255 }; //red
-//sphere1.specular = 500 //shiny
-
-//sphere2.center = { 2, 0, 4 };
-//sphere2.radius = 1.0;
-//sphere2.color = { 0, 0, 255 ,255 };// Blue
-//sphere2.specular = 500//shiny
-
-//sphere3.center = { -2, 0, 4 };
-//sphere3.radius = 1.0;
-//sphere3.color = { 0, 255, 0 ,255 }; // Green*/
-//sphere3.specular = 100 // somewhat shiny
-
 //sphere array
 #define SPHERES 5
-Sphere _spheres[SPHERES] = {sphere1,sphere2,sphere3,kirby4};
+Sphere _spheres[SPHERES] = {sphere1,sphere2,sphere3,sphere4};
 int _spheresCount = 4;
 
 // light
@@ -137,10 +63,6 @@ struct Light {
 	Vector3 direction;
 };
 
-//initialise lights
-//Light light_ambient{ 1,0.2,{0} ,{0} };
-//Light light_point{ 2,0.6,{2,1,0},{0} };
-//Light light_directional{ 3,0.2,{0},{1,4,4} };
 Light light_ambient{ 1,0.2,{0} ,{0} };
 Light light_point1{ 2,0.5,{2,1,0},{0} };
 Light light_point2{ 3,0.8,{0},{0,3,0} };
@@ -149,7 +71,6 @@ Light light_directional{ 3,0.1,{0},{1,4,4} };
 
 //light array
 #define LIGHTS 5
-//Light _lights[LIGHTS] = { light_ambient,light_point,light_directional };
 Light _lights[LIGHTS] = {light_ambient,light_point1};
 int _lightsCount = 3;
 
@@ -263,7 +184,6 @@ void DrawUI() {
 
 
 void selectionFlash() {
-	
 	static Sphere* lastSelectedSphere = nullptr;
 	static Color originalColour;
 
@@ -296,9 +216,7 @@ void selectionFlash() {
 	}
 
 }
-//
 
-// Remove Sphere and sort
 void deleteSphere() {
 	*(currentSphereSelected) = { 0 };
 	_spheresCount -= 1;
@@ -336,48 +254,15 @@ void deleteLight() {
 void initialise() {
 	InitWindow(window_width, window_height, "Graphics Engine");
 }
+
 void DrawPixelCenter(int posXorigin, int posYorigin, Color color) {
-	/*The upside-down output is likely due to the difference in coordinate systems between traditional computer graphics and the coordinate system used by Raylib.
-	Raylib uses a top-left origin coordinate system, where the top-left corner is (0,0), and the y-coordinate increases as you go down the window. On the other hand, in traditional computer graphics, the bottom-left corner is often considered the origin, with the y-coordinate increasing as you go up.
-	In your rendering loop, when you call DrawPixelCenter(x, y, color), y is likely being used as a traditional graphics coordinate where positive values go up, but Raylib expects it to be a top-left origin coordinate.*/
-	/*Invert Y-Coordinate:
-	In your DrawPixelCenter function, invert the y coordinate before passing it to DrawPixel:*/
-	// original code -> DrawPixel((window_width / 2 + posXorigin), (window_height / 2 + posYorigin), color);
 	DrawPixel((window_width / 2 + posXorigin), (window_height / 2 - posYorigin), color);
 }
+
 Vector3 CanvasCoordstoViewportCoords(float canvasX,float canvasY) {
 	return {canvasX*ViewportWidth/CanvasWidth,canvasY*ViewportHeight/CanvasHeight,1}; // 1 is distance between camera&projection plane
 }
 
-/*void IntersectRaySphere(Vector3 O, Vector3 D, Sphere sphere, float* t1, float* t2) {
-	 float r = sphere.radius;
-	 Vector3 CO = Vector3Subtract(O, sphere.center);
-
-	 float a = Vector3DotProduct(D, D);
-	 float b = 2 * Vector3DotProduct(CO, D);
-	 float c = Vector3DotProduct(CO, CO) - (r * r);
-	 
-	 float discriminant = (b * b) - (4 * a * c);
-	 const float epsilon = 0.0001;
-	 if (fabs(discriminant) < epsilon) {
-		 // Treat discriminant as 0 (one real root)
-		 *t1 = (-b - sqrt(discriminant)) / (2 * a);
-		 *t2 = (-b + sqrt(discriminant)) / (2 * a);
-		 cout << "Discriminant positive" << endl;
-	 }
-	 else if (discriminant < 0) {
-		 // No real roots
-		 *t1 = INFINITY;
-		 *t2 = INFINITY;
-		// cout << "Discriminant : " << discriminant << endl;
-	 }
-	 else {
-		 *t1 = (-b - sqrt(discriminant)) / (2 * a);
-		 *t2 = (-b + sqrt(discriminant)) / (2 * a);
-		 cout << "Discriminant positive" << endl;
-	 }
-	 
-}*/
 void IntersectRaySphere(Vector3 O, Vector3 D, Sphere sphere, float* t1, float* t2) {
 	float r = sphere.radius;
 	Vector3 CO = Vector3Subtract(O, sphere.center);
@@ -395,25 +280,18 @@ void IntersectRaySphere(Vector3 O, Vector3 D, Sphere sphere, float* t1, float* t
 		*t1 = (-b - sqrt(discriminant)) / (2 * a);
 		*t2 = (-b + sqrt(discriminant)) / (2 * a);
 
-		// Debug output
-		//cout << "Discriminant is 0: " << discriminant << endl;
-		//cout << "Roots: " << *t1 << ", " << *t2 << endl;
 	}
 	else if (discriminant < 0) {
 		// No real roots
 		*t1 = INFINITY;
 		*t2 = INFINITY;
-		//cout << "Discriminant is negative: " << discriminant << endl;
 	}
 	else {
 		*t1 = (-b - sqrt(discriminant)) / (2 * a);
 		*t2 = (-b + sqrt(discriminant)) / (2 * a);
-
-		// Debug output
-		//cout << "Discriminant is positive: " << discriminant << endl;
-		//cout << "Roots: " << *t1 << ", " << *t2 << endl;
 	}
 }
+
 void ClosestIntersection(Vector3 O, Vector3 D, float t_min, float t_max) {
 	closest_t = INFINITY;
 	closest_sphere = { Vector3{0, 0, 0}, 0, Color{0, 0, 0, 0} };
@@ -424,7 +302,7 @@ void ClosestIntersection(Vector3 O, Vector3 D, float t_min, float t_max) {
 
 		if (t1 > t_min && t1 < t_max && t1 < closest_t) {
 			closest_t = t1;
-			//make copy construtcor
+			
 			closest_sphere.center.x = _spheres[i].center.x;
 			closest_sphere.center.y = _spheres[i].center.y;
 			closest_sphere.center.z = _spheres[i].center.z;
@@ -435,9 +313,6 @@ void ClosestIntersection(Vector3 O, Vector3 D, float t_min, float t_max) {
 			closest_sphere.color.g = _spheres[i].color.g;
 			closest_sphere.color.b = _spheres[i].color.b;
 			closest_sphere.color.a = _spheres[i].color.a;
-
-			//why when i uncomment this the program wont work?
-			//cout << "Cloest_t : " << closest_t<<endl;
 
 			closest_sphere.specular = _spheres[i].specular;
 			
@@ -459,9 +334,7 @@ void ClosestIntersection(Vector3 O, Vector3 D, float t_min, float t_max) {
 			closest_sphere.color.g = _spheres[i].color.g;
 			closest_sphere.color.b = _spheres[i].color.b;
 			closest_sphere.color.a = _spheres[i].color.a;
-			//why when i uncomment this the program wont work?
-			//cout << "Cloest_t : " << closest_t << endl;
-
+			
 			closest_sphere.specular = _spheres[i].specular;
 
 			if (drawReflection) {
@@ -470,6 +343,7 @@ void ClosestIntersection(Vector3 O, Vector3 D, float t_min, float t_max) {
 		}
 	}
 }
+
 void ClosestShadowIntersection(Vector3 O, Vector3 D, float t_min, float t_max) {
 	closest_t = INFINITY;
 	closest_shadow = { Vector3{0, 0, 0}, 0, Color{0, 0, 0, 0} };
@@ -480,7 +354,7 @@ void ClosestShadowIntersection(Vector3 O, Vector3 D, float t_min, float t_max) {
 
 		if (t1 > t_min && t1 < t_max && t1 < closest_t) {
 			closest_t = t1;
-			//make copy construtcor
+			
 			closest_shadow.center.x = _spheres[i].center.x;
 			closest_shadow.center.y = _spheres[i].center.y;
 			closest_shadow.center.z = _spheres[i].center.z;
@@ -491,9 +365,6 @@ void ClosestShadowIntersection(Vector3 O, Vector3 D, float t_min, float t_max) {
 			closest_shadow.color.g = _spheres[i].color.g;
 			closest_shadow.color.b = _spheres[i].color.b;
 			closest_shadow.color.a = _spheres[i].color.a;
-
-			//why when i uncomment this the program wont work?
-			//cout << "Cloest_t : " << closest_t<<endl;
 
 			closest_shadow.specular = _spheres[i].specular;
 		}
@@ -511,8 +382,6 @@ void ClosestShadowIntersection(Vector3 O, Vector3 D, float t_min, float t_max) {
 			closest_shadow.color.g = _spheres[i].color.g;
 			closest_shadow.color.b = _spheres[i].color.b;
 			closest_shadow.color.a = _spheres[i].color.a;
-			//why when i uncomment this the program wont work?
-			//cout << "Cloest_t : " << closest_t << endl;
 
 			closest_shadow.specular = _spheres[i].specular;
 		}
@@ -520,13 +389,6 @@ void ClosestShadowIntersection(Vector3 O, Vector3 D, float t_min, float t_max) {
 }
 
 Vector3 ReflectRay(Vector3 R,Vector3 N) {
-	/*Vector3 _2n_dot_NR;
-	Vector3 _2n;
-	Vector3 _2n_dot_NR_minus_R;
-
-	_2n = Vector3Scale(N, 2);
-	_2n_dot_NR = Vector3Scale(_2n, Vector3DotProduct(N, R));
-	_2n_dot_NR_minus_R = Vector3Subtract(_2n_dot_NR, R);*/
 	return Vector3Subtract(Vector3Scale(N, 2.0f * Vector3DotProduct(N, R)), R);
 
 }
@@ -595,7 +457,6 @@ float ComputeLighting(Vector3 P, Vector3 N, Vector3 V, int s) {
 		}
 	}
 
-	//cout << "LIGHT INTENSITY: " << i << endl;
 	return i;
 }
 Color TraceRay(Vector3 O, Vector3 D, float t_min, float t_max, int recursion_depth) {
@@ -646,15 +507,6 @@ Color TraceRay(Vector3 O, Vector3 D, float t_min, float t_max, int recursion_dep
 
 		return local_color;
 	}
-
-
-	/*When you multiply the RGB components of the color with the specular reflection intensity, 
-	you might end up with a color that is too dark or saturated, especially if the specular reflection intensity is high.
-	Instead, you should scale the intensity while keeping the color values within a valid range.*/
-	//cout << "R: " << closest_sphere.color.r << endl;
-	//WaitTime(1);
-	//cout << "COLOUR RETURNED After Lighting: " << "R : " << closest_sphere.color.r << "G : " << closest_sphere.color.g << "B : " << closest_sphere.color.b << "A : " << closest_sphere.color.a << endl;
-	
 }
 
 void quit() {
@@ -731,7 +583,6 @@ void input() {
 
 	if (IsKeyPressed(KEY_C) && drawUI && (time % delay == 1)) {
 		
-		
 		currentSphereIndex++;
 		if (currentSphereIndex >= _spheresCount) {
 			currentSphereIndex = 0; 
@@ -795,9 +646,6 @@ void input() {
 
 }
 
-void update() {
-	
-}
 void render() {
 	BeginDrawing();
 	
@@ -824,7 +672,6 @@ int main() {
 	initialise();
 	while (!WindowShouldClose()) {
 		input();
-		update();
 		render();
 	}
 	quit();
