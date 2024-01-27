@@ -121,7 +121,6 @@ Sphere kirby9{ {0,0.15,-0.8},0.2,{139,0,0,255},50 };
 Sphere sphere1{ {0,-1,3},1.0,{255,0,0,255},500 };
 
 //sphere array
-
 #define SPHERES 20
 Sphere _spheres[SPHERES] = {sphere1};
 int _spheresCount = 1;
@@ -143,15 +142,30 @@ struct Light {
 //Light light_point{ 2,0.6,{2,1,0},{0} };
 //Light light_directional{ 3,0.2,{0},{1,4,4} };
 Light light_ambient{ 1,0.5,{0} ,{0} };
-Light light_point1{ 2,0.1,{2,1,0},{0} };
+Light light_point1{ 2,0.5,{2,1,0},{0} };
 Light light_point2{ 0,0.8,{0},{0,3,0} };
 
-Light light_directional{ 0,0.1,{0},{1,4,4} };
+Light light_directional{ 3,0.1,{0},{1,4,4} };
 
 //light array
 #define LIGHTS 10
 //Light _lights[LIGHTS] = { light_ambient,light_point,light_directional };
-Light _lights[LIGHTS] = { light_ambient,light_point1,light_point2,light_directional };
+Light _lights[LIGHTS] = { light_ambient,light_point1,light_directional};
+int _lightsCount = 3;
+
+const char* returnLighttype(Light *light) {
+	switch (light->type) {
+	case 1 :
+		return "Ambient Light";
+		break;
+	case 2: 
+		return "Point Light";
+		break;
+	case 3:
+		return "Directional Light";
+		break;
+	}
+}
 
 // Traceray
 float closest_t;
@@ -199,6 +213,10 @@ int currentSphereIndex = 0;
 bool drawUI = false;
 bool drawEditor = false;
 bool changeColour = false;
+
+Light* currentLightSelected = &_lights[0];
+int currentLightIndex = 0;
+
 void DrawUI() {
 	DrawFPS(18, 20);
 	DrawText(TextFormat("Camera Position : %.2f , %.2f, %.2f ", O.x, O.y, O.z), 20, 40, 20, BLACK);
@@ -207,25 +225,27 @@ void DrawUI() {
 	DrawText(TextFormat("Press C to cycle between spheres (Current Sphere: (X : %.2f, Y : %.2f, Z : %.2f))",currentSphereSelected->center.x, currentSphereSelected->center.y, currentSphereSelected->center.z),20,100,20,BLACK);
 	DrawText("Press X to delete sphere ", 20,120,20,BLACK);
 	DrawText("Press TAB to toggle editor", 20, 140,20, BLACK);
-
+	DrawText("Press L to cycle between light sources", 20, 160, 20, BLACK);
+	DrawText(TextFormat("(%s ,Intensity:%.2f, Position(X:%.2f,Y:%.2f,Z:%.2f, Direction(X:%.2f,Y:%.2f,Z:%.2f)))", returnLighttype(currentLightSelected),currentLightSelected->intensity,currentLightSelected->position.x,currentLightSelected->position.y,currentLightSelected->position.z,currentLightSelected->direction.x, currentLightSelected->direction.y, currentLightSelected->direction.z),20, 180, 20, BLACK);
 	if (drawEditor) {
 
-		Rectangle window{ 20,140,500,300 };
+		Rectangle window{ 20,280,500,300 };
 		GuiPanel(window, "Editor");
 
-		DrawText("Press F to confirm colour change", 80, 140, 20, BLACK);
+		DrawText("Press F to confirm colour change", 80, 280, 20, BLACK);
 
-		Rectangle radius{ 80,170,200,20 };
+		Rectangle radius{ 80,310,200,20 };
 		GuiSlider(radius, "Radius 0.1", "Radius 10", &(currentSphereSelected->radius), 0.1, 10);
 
-		Rectangle specular{ 80,200,200,20 };
+		Rectangle specular{ 80,340,200,20 };
 		GuiSpinner(specular, "Specular ", &(currentSphereSelected->specular), 1, 5000, drawEditor);
 
-		Rectangle colour{ 30,230,200,200 };
+		Rectangle colour{ 30,370,200,200 };
 		GuiColorPicker(colour, "Colour Picker", &(currentSphereSelected->color));
 	}
+
 }
-Color tempcolor = WHITE;
+
 
 void selectionFlash() {
 	
@@ -459,7 +479,6 @@ void ClosestShadowIntersection(Vector3 O, Vector3 D, float t_min, float t_max) {
 		}
 	}
 }
-
 float ComputeLighting(Vector3 P, Vector3 N, Vector3 V, int s) {
 	float i = 0;
 	float t_max =1;
@@ -523,7 +542,6 @@ float ComputeLighting(Vector3 P, Vector3 N, Vector3 V, int s) {
 	//cout << "LIGHT INTENSITY: " << i << endl;
 	return i;
 }
-
 Color TraceRay(Vector3 O, Vector3 D, float t_min, float t_max) {
 	Vector3 P;
 	Vector3 N;
@@ -559,52 +577,53 @@ void quit() {
 	CloseWindow();
 }
 void input() {
-	if (IsKeyDown(KEY_W)) {
-		O.z += cos(DEG2RAD * _y_rotation);  // Update Z based on the rotation
-		O.x += sin(DEG2RAD * _y_rotation);  // Update X based on the rotation
-	}
-	if (IsKeyDown(KEY_S)) {
-		O.z -= cos(DEG2RAD * _y_rotation);
-		O.x -= sin(DEG2RAD * _y_rotation);
-	}
-	if (IsKeyDown(KEY_A)) {
-		O.x -= cos(DEG2RAD * _y_rotation);
-		O.z += sin(DEG2RAD * _y_rotation);
-	}
-	if (IsKeyDown(KEY_D)) {
-		O.x += cos(DEG2RAD * _y_rotation);
-		O.z -= sin(DEG2RAD * _y_rotation);
-	}
-	if (IsKeyDown(KEY_SPACE)) {
-		O.y += 1;
-	}
-	if (IsKeyDown(KEY_LEFT_SHIFT)) {
-		O.y -= 1;
-	}
+	//Controls
+	{
+		if (IsKeyDown(KEY_W)) {
+			O.z += cos(DEG2RAD * _y_rotation);  // Update Z based on the rotation
+			O.x += sin(DEG2RAD * _y_rotation);  // Update X based on the rotation
+		}
+		if (IsKeyDown(KEY_S)) {
+			O.z -= cos(DEG2RAD * _y_rotation);
+			O.x -= sin(DEG2RAD * _y_rotation);
+		}
+		if (IsKeyDown(KEY_A)) {
+			O.x -= cos(DEG2RAD * _y_rotation);
+			O.z += sin(DEG2RAD * _y_rotation);
+		}
+		if (IsKeyDown(KEY_D)) {
+			O.x += cos(DEG2RAD * _y_rotation);
+			O.z -= sin(DEG2RAD * _y_rotation);
+		}
+		if (IsKeyDown(KEY_SPACE)) {
+			O.y += 1;
+		}
+		if (IsKeyDown(KEY_LEFT_SHIFT)) {
+			O.y -= 1;
+		}
 
-	if (IsKeyDown(KEY_DOWN)) {
-		_x_rotation += 5;
+		if (IsKeyDown(KEY_DOWN)) {
+			_x_rotation += 5;
 
-	}
-	if (IsKeyDown(KEY_UP)) {
-		_x_rotation -= 5;
-	}
-	if (IsKeyDown(KEY_RIGHT)) {
-		_y_rotation += 5;
-	}
-	if (IsKeyDown(KEY_LEFT)) {
-		_y_rotation -= 5;
+		}
+		if (IsKeyDown(KEY_UP)) {
+			_x_rotation -= 5;
+		}
+		if (IsKeyDown(KEY_RIGHT)) {
+			_y_rotation += 5;
+		}
+		if (IsKeyDown(KEY_LEFT)) {
+			_y_rotation -= 5;
+		}
 	}
 	//draw UI
 	if (IsKeyPressed(KEY_Q)) {
 		drawUI = !drawUI;
-
 	}
 	//draw editor
 	if (drawUI && IsKeyPressed(KEY_TAB)) {
 		drawEditor = !drawEditor;
 	}
-
 
 	//spawn Sphere
 	if (IsKeyPressed(KEY_B) && drawUI && _spheresCount<SPHERES) {
@@ -645,6 +664,13 @@ void input() {
 		changeColour = true;
 	}
 
+	if (IsKeyPressed(KEY_L) && drawUI ) {
+		currentLightIndex++;
+		if (currentLightIndex >= _lightsCount) {
+			currentLightIndex = 0;
+		}
+		currentLightSelected = &_lights[currentLightIndex];	
+	}
 }
 
 void update() {
