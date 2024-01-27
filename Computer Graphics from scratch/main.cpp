@@ -82,30 +82,21 @@ struct Sphere {
 	float radius;
 	Color color;
 	int specular;
-	bool isSelected;
+	float reflective;
 };
+//reflections
+
+const int recursion_depth = 3;
 
 //initiliase sphere
 // KIRBY
 //body
 Sphere kirby1 { {0,0,0},1.0,{239,182,212,255},100 };
-//sphere1.center = { 0,-1,3 };
-//sphere1.radius = 1.0;
-//sphere1.color = { 255,0,0,255 }; //red
-//sphere1.specular = 500 //shiny
 //hands
 Sphere kirby2{ {0.95,0.15,0},0.3,{239,182,212,255},100 };
-//sphere2.center = { 2, 0, 4 };
-//sphere2.radius = 1.0;
-//sphere2.color = { 0, 0, 255 ,255 };// Blue
-//sphere2.specular = 500//shiny
 Sphere kirby3{ {-0.95,0.15,0},0.3,{239,182,212,255}, 100 };
-//sphere3.center = { -2, 0, 4 };
-//sphere3.radius = 1.0;
-//sphere3.color = { 0, 255, 0 ,255 }; // Green*/
-//sphere3.specular = 100 // somewhat shiny
 //grass
-Sphere kirby4{ {0,-5001,0},5000.0,{65,152,10,255},10 };
+Sphere kirby4{ {0,-5001,0},5000.0,{65,152,10,255},10,0.1 };
 //feet
 Sphere kirby5{ {0.85,-0.75,0},0.4,{215,72,148,255},100 };
 Sphere kirby6{ {-0.85,-0.75,0},0.4,{215,72,148,255},100 };
@@ -118,12 +109,29 @@ Sphere kirby11{ {0.3,0.25,-1},0.1,{255,255,255,255},100 };
 //mouth
 Sphere kirby9{ {0,0.15,-0.8},0.2,{139,0,0,255},50 };
 
-Sphere sphere1{ {0,-1,3},1.0,{255,0,0,255},500 };
+Sphere sphere1{ {0,-1,3},1.0,{255,0,0,255},500, 0.2};
+Sphere sphere2{ {2, 0, 4},1.0, { 0, 0, 255 ,255 },500,0.2 };
+Sphere sphere3{ { -2, 0, 4 } ,1.0,{ 0, 255, 0 ,255 },100,0.2 };
+
+//sphere1.center = { 0,-1,3 };
+//sphere1.radius = 1.0;
+//sphere1.color = { 255,0,0,255 }; //red
+//sphere1.specular = 500 //shiny
+
+//sphere2.center = { 2, 0, 4 };
+//sphere2.radius = 1.0;
+//sphere2.color = { 0, 0, 255 ,255 };// Blue
+//sphere2.specular = 500//shiny
+
+//sphere3.center = { -2, 0, 4 };
+//sphere3.radius = 1.0;
+//sphere3.color = { 0, 255, 0 ,255 }; // Green*/
+//sphere3.specular = 100 // somewhat shiny
 
 //sphere array
-#define SPHERES 20
-Sphere _spheres[SPHERES] = {sphere1};
-int _spheresCount = 1;
+#define SPHERES 4
+Sphere _spheres[SPHERES] = {sphere1,sphere2,sphere3,kirby4};
+int _spheresCount = 4;
 
 // light
 // 1 ambient
@@ -141,9 +149,9 @@ struct Light {
 //Light light_ambient{ 1,0.2,{0} ,{0} };
 //Light light_point{ 2,0.6,{2,1,0},{0} };
 //Light light_directional{ 3,0.2,{0},{1,4,4} };
-Light light_ambient{ 1,0.5,{0} ,{0} };
+Light light_ambient{ 1,0.2,{0} ,{0} };
 Light light_point1{ 2,0.5,{2,1,0},{0} };
-Light light_point2{ 0,0.8,{0},{0,3,0} };
+Light light_point2{ 3,0.8,{0},{0,3,0} };
 
 Light light_directional{ 3,0.1,{0},{1,4,4} };
 
@@ -429,6 +437,7 @@ void ClosestIntersection(Vector3 O, Vector3 D, float t_min, float t_max) {
 			//cout << "Cloest_t : " << closest_t<<endl;
 
 			closest_sphere.specular = _spheres[i].specular;
+			closest_sphere.reflective = _spheres[i].reflective;
 		}
 
 		if (t2 > t_min && t2 < t_max && t2 < closest_t) {
@@ -448,6 +457,8 @@ void ClosestIntersection(Vector3 O, Vector3 D, float t_min, float t_max) {
 			//cout << "Cloest_t : " << closest_t << endl;
 
 			closest_sphere.specular = _spheres[i].specular;
+
+			closest_sphere.reflective = _spheres[i].reflective;
 		}
 	}
 }
@@ -499,6 +510,19 @@ void ClosestShadowIntersection(Vector3 O, Vector3 D, float t_min, float t_max) {
 		}
 	}
 }
+
+Vector3 ReflectRay(Vector3 R,Vector3 N) {
+	Vector3 _2n_dot_NR;
+	Vector3 _2n;
+	Vector3 _2n_dot_NR_minus_R;
+
+	_2n = Vector3Scale(N, 2);
+	_2n_dot_NR = Vector3Scale(_2n, Vector3DotProduct(N, R));
+	_2n_dot_NR_minus_R = Vector3Subtract(_2n_dot_NR, R);
+	return _2n_dot_NR_minus_R;
+
+}
+
 float ComputeLighting(Vector3 P, Vector3 N, Vector3 V, int s) {
 	float i = 0;
 	float t_max =1;
@@ -562,35 +586,55 @@ float ComputeLighting(Vector3 P, Vector3 N, Vector3 V, int s) {
 	//cout << "LIGHT INTENSITY: " << i << endl;
 	return i;
 }
-Color TraceRay(Vector3 O, Vector3 D, float t_min, float t_max) {
+Color TraceRay(Vector3 O, Vector3 D, float t_min, float t_max, int recursion_depth) {
 	Vector3 P;
 	Vector3 N;
+	Vector3 R;
+	Color reflected_color;
+	Color local_color;
+	float r = 0;
 	
 	ClosestIntersection(O, D, t_min, t_max);
 
 	const float epsilon = 0.0001;
 	// Use epsilon for floating-point comparison
 	if (fabs(closest_sphere.radius) < epsilon) {
-		//cout << " BG COLOUR RETURNED" << endl;
 		return BGcolour;
-
 	}
 		
-	//cout << "COLOUR RETURNED : " << "R : " << closest_sphere.color.r << "G : " << closest_sphere.color.g << "B : " << closest_sphere.color.b << "A : " << closest_sphere.color.a<<endl;
 	P = Vector3Add(O, Vector3Scale(D,closest_t)); // Compute intersection
 	N = Vector3Subtract(P, closest_sphere.center); // Compute sphere normal at intersection
 	N = Vector3Scale( N, Vector3Length(N));
 
-	closest_sphere.color.r = (unsigned char)Clamp(closest_sphere.color.r * ComputeLighting(P, N,Vector3Negate(D),closest_sphere.specular),0,255);
-	closest_sphere.color.g = (unsigned char)Clamp(closest_sphere.color.g * ComputeLighting(P, N,Vector3Negate(D),closest_sphere.specular),0,255);
-	closest_sphere.color.b = (unsigned char)Clamp(closest_sphere.color.b * ComputeLighting(P, N,Vector3Negate(D),closest_sphere.specular),0,255);
+	//local colour
+	local_color.r = (unsigned char)Clamp(closest_sphere.color.r * ComputeLighting(P, N,Vector3Negate(D),closest_sphere.specular),0,255);
+	local_color.g = (unsigned char)Clamp(closest_sphere.color.g * ComputeLighting(P, N,Vector3Negate(D),closest_sphere.specular),0,255);
+	local_color.b = (unsigned char)Clamp(closest_sphere.color.b * ComputeLighting(P, N,Vector3Negate(D),closest_sphere.specular),0,255);
+
+	r = closest_sphere.reflective;
+
+	if (recursion_depth <= 0 || r<=0) {
+		return local_color;
+	}
+	
+	//compute reflected colour
+	R = ReflectRay(Vector3Negate(D), N);
+	reflected_color = TraceRay(P, R, 0.001, INFINITY, (recursion_depth - 1));
+
+	//clamp values
+	local_color.r = (unsigned char)Clamp(local_color.r * (1 - r) + reflected_color.r * r, 0, 255);
+	local_color.g = (unsigned char)Clamp(local_color.g * (1 - r) + reflected_color.g * r, 0, 255);
+	local_color.b = (unsigned char)Clamp(local_color.b * (1 - r) + reflected_color.b * r, 0, 255);
+
+	return local_color;
+	
 	/*When you multiply the RGB components of the color with the specular reflection intensity, 
 	you might end up with a color that is too dark or saturated, especially if the specular reflection intensity is high.
 	Instead, you should scale the intensity while keeping the color values within a valid range.*/
 	//cout << "R: " << closest_sphere.color.r << endl;
 	//WaitTime(1);
 	//cout << "COLOUR RETURNED After Lighting: " << "R : " << closest_sphere.color.r << "G : " << closest_sphere.color.g << "B : " << closest_sphere.color.b << "A : " << closest_sphere.color.a << endl;
-	return closest_sphere.color;
+	
 }
 
 void quit() {
@@ -667,13 +711,13 @@ void input() {
 
 	if (IsKeyPressed(KEY_C) && drawUI && (time % delay == 1)) {
 		
-		currentSphereSelected->isSelected = false;
+		
 		currentSphereIndex++;
 		if (currentSphereIndex >= _spheresCount) {
 			currentSphereIndex = 0; 
 		}
 		currentSphereSelected = &_spheres[currentSphereIndex];
-		currentSphereSelected->isSelected = true;
+
 	}
 	
 	if (IsKeyPressed(KEY_X) && drawUI&&_spheresCount>=0) {
@@ -715,7 +759,7 @@ void render() {
 			Vector3 ViewportCoords = CanvasCoordstoViewportCoords(x, y);
 			
 			D =	Vector3Transform(Vector3Transform(ViewportCoords, X_Rotation(DEG2RAD * _x_rotation)), Y_Rotation(DEG2RAD * _y_rotation));
-			color = TraceRay(O,D,1,INFINITY);
+			color = TraceRay(O,D,1,INFINITY,recursion_depth);
 			DrawPixelCenter(x, y, color);
 		}
 	}
