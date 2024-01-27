@@ -72,7 +72,7 @@ Light light_directional{ 3,0.1,{0},{1,4,4} };
 //light array
 #define LIGHTS 5
 Light _lights[LIGHTS] = {light_ambient,light_point1};
-int _lightsCount = 3;
+int _lightsCount = 2;
 
 const char* returnLighttype(Light *light) {
 	switch (light->type) {
