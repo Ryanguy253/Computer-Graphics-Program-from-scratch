@@ -26,5 +26,14 @@
     <ClInclude Include="raygui.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\..\Documents\C++ libraries\raylib-5.0_win64_msvc16\include\raylib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Documents\C++ libraries\raylib-5.0_win64_msvc16\include\raymath.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Documents\C++ libraries\raylib-5.0_win64_msvc16\include\rlgl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

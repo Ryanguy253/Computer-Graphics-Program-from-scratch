@@ -10,17 +10,9 @@
 
 //issues rotation stays at - if i rotate too much
 
-// add reflections
-
-// add minimap
 // add good documentation
 // add light editor
 // show light sources in UI and highlight light
-// add save file
-
-// added flashing spheres when selected
-
-
 
 /* second issue : 
 			no copy construtcor
@@ -129,7 +121,7 @@ Sphere sphere3{ { -2, 0, 4 } ,1.0,{ 0, 255, 0 ,255 },100,0.2 };
 //sphere3.specular = 100 // somewhat shiny
 
 //sphere array
-#define SPHERES 4
+#define SPHERES 5
 Sphere _spheres[SPHERES] = {sphere1,sphere2,sphere3,kirby4};
 int _spheresCount = 4;
 
@@ -156,9 +148,9 @@ Light light_point2{ 3,0.8,{0},{0,3,0} };
 Light light_directional{ 3,0.1,{0},{1,4,4} };
 
 //light array
-#define LIGHTS 3
+#define LIGHTS 5
 //Light _lights[LIGHTS] = { light_ambient,light_point,light_directional };
-Light _lights[LIGHTS] = {light_ambient,light_point1,light_directional};
+Light _lights[LIGHTS] = {light_ambient,light_point1};
 int _lightsCount = 3;
 
 const char* returnLighttype(Light *light) {
@@ -236,10 +228,16 @@ void DrawUI() {
 	DrawText(TextFormat("Spawn Sphere (Press B) MAX : %d / %d ",_spheresCount ,SPHERES), 20, 80, 20, BLACK);
 	DrawText(TextFormat("Press C to cycle between spheres (Current Sphere: (X : %.2f, Y : %.2f, Z : %.2f))",currentSphereSelected->center.x, currentSphereSelected->center.y, currentSphereSelected->center.z),20,100,20,BLACK);
 	DrawText("Press X to delete sphere ", 20,120,20,BLACK);
-	DrawText("Press TAB to toggle editor", 20, 140,20, BLACK);
-	DrawText("Press L to cycle between light sources", 20, 160, 20, BLACK);
-	DrawText(TextFormat("(%s ,Intensity:%.2f, Position(X:%.2f,Y:%.2f,Z:%.2f, Direction(X:%.2f,Y:%.2f,Z:%.2f)))", returnLighttype(currentLightSelected),currentLightSelected->intensity,currentLightSelected->position.x,currentLightSelected->position.y,currentLightSelected->position.z,currentLightSelected->direction.x, currentLightSelected->direction.y, currentLightSelected->direction.z),20, 180, 20, BLACK);
-	DrawText("Press R to toggle Reflections", 20, 200, 20, BLACK);
+
+	DrawText(TextFormat("Press R to toggle Reflections (%s)",drawReflection? "ON":"OFF"), 20, 140, 20, BLACK);
+	
+	DrawText(TextFormat("Press L to cycle between light sources (MAX : %d / %d )",_lightsCount,LIGHTS), 20, 180, 20, BLACK);
+	DrawText(TextFormat("(%s ,Intensity:%.2f, Position(X:%.2f,Y:%.2f,Z:%.2f, Direction(X:%.2f,Y:%.2f,Z:%.2f)))", returnLighttype(currentLightSelected),currentLightSelected->intensity,currentLightSelected->position.x,currentLightSelected->position.y,currentLightSelected->position.z,currentLightSelected->direction.x, currentLightSelected->direction.y, currentLightSelected->direction.z),20, 200, 20, BLACK);
+	DrawText("Press J to add light source (Use KEYS 1 or 2 to change type)", 20, 220, 20, BLACK);
+	
+	DrawText("(Use KEY U to increase intensity and KEY I to decrease intensity)", 20, 240, 20, BLACK);
+	DrawText("Press K to delete light source", 20, 260, 20, BLACK);
+	DrawText("Press TAB to toggle editor", 20, 280, 20, BLACK);
 
 	if (drawEditor) {
 
@@ -544,6 +542,10 @@ float ComputeLighting(Vector3 P, Vector3 N, Vector3 V, int s) {
 	
 
 	for (int j = 0; j < LIGHTS; j++) {
+		if (_lights[j].type == 0) {
+			break;
+		}
+
 		if (_lights[j].type == 1) {
 			i += _lights[j].intensity;
 		}
@@ -759,8 +761,38 @@ void input() {
 
 	if (IsKeyPressed(KEY_R) && drawUI) {
 		drawReflection = !drawReflection;
-		cout << drawReflection << endl;
 	}
+
+	if (IsKeyPressed(KEY_J) && drawUI && _lightsCount < LIGHTS) {
+		Light temp = { 0 };
+
+		temp.type = 2;
+		temp.position.x = O.x;
+		temp.position.y = O.y;
+		temp.position.z = O.z;
+
+		temp.intensity = 0.2;
+		
+		_lights[_lightsCount] = temp;
+		_lightsCount++;
+	}
+
+	if (IsKeyPressed(KEY_ONE)&&drawUI) {
+		currentLightSelected->type = 1;
+	}
+	if (IsKeyPressed(KEY_TWO) && drawUI) {
+		currentLightSelected->type = 2;
+	}
+
+	if (IsKeyPressed(KEY_U) && drawUI && currentLightSelected->intensity <= 1.0) {
+		currentLightSelected->intensity += 0.1;
+	}
+	if (IsKeyPressed(KEY_I) && drawUI && currentLightSelected->intensity >=0.0) {
+		currentLightSelected->intensity -= 0.1;
+	}
+
+
+
 }
 
 void update() {

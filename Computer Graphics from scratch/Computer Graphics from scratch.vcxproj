@@ -143,6 +143,9 @@
     <ClCompile Include="raygui.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\Documents\C++ libraries\raylib-5.0_win64_msvc16\include\raylib.h" />
+    <ClInclude Include="..\..\..\..\Documents\C++ libraries\raylib-5.0_win64_msvc16\include\raymath.h" />
+    <ClInclude Include="..\..\..\..\Documents\C++ libraries\raylib-5.0_win64_msvc16\include\rlgl.h" />
     <ClInclude Include="raygui.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
