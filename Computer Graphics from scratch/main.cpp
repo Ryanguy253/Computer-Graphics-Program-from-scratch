@@ -150,7 +150,7 @@ Light light_directional{ 3,0.1,{0},{1,4,4} };
 //light array
 #define LIGHTS 10
 //Light _lights[LIGHTS] = { light_ambient,light_point,light_directional };
-Light _lights[LIGHTS] = { light_ambient,light_point1,light_directional};
+Light _lights[LIGHTS] = {light_ambient,light_point1,light_directional};
 int _lightsCount = 3;
 
 const char* returnLighttype(Light *light) {
@@ -164,7 +164,11 @@ const char* returnLighttype(Light *light) {
 	case 3:
 		return "Directional Light";
 		break;
+	case 0:
+		return "No Light Source";
+		break;
 	}
+	
 }
 
 // Traceray
@@ -300,6 +304,22 @@ void deleteSphere() {
 		}
 	}
 
+}
+
+void deleteLight() {
+	*(currentLightSelected) = { 0 };
+	_lightsCount -= 1;
+
+	// arrange array
+	for (int i = 0; i < LIGHTS - 1; i++) {
+		if (_lights[i].type == 0) {
+			for (int x = i; x < LIGHTS - 1; x++) {
+				_lights[x] = _lights[x + 1];
+			}
+			// After shifting elements, the last element needs to be set to zero
+			_lights[LIGHTS - 1] = { 0 };
+		}
+	}
 }
 
 void initialise() {
@@ -671,6 +691,17 @@ void input() {
 		}
 		currentLightSelected = &_lights[currentLightIndex];	
 	}
+	if (IsKeyPressed(KEY_K) && drawUI && _lightsCount >= 0) {
+		deleteLight();
+	}
+
+
+
+
+
+
+
+
 }
 
 void update() {
