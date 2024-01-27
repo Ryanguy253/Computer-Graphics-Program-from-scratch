@@ -5,6 +5,8 @@
 #include<iostream>
 #include <math.h>
 
+// issue with delete sphere and flashing
+
 using namespace std;
 
 int window_width = 1000;
@@ -44,7 +46,7 @@ const int recursion_depth = 2;
 Sphere sphere4{ {0,-5001,0},5000.0,{65,152,10,255},10,0.1 };
 Sphere sphere1{ {0,-1,3},1.0,{255,0,0,255},500, 0.2};
 Sphere sphere2{ {2, 0, 4},1.0, { 0, 0, 255 ,255 },500,0.2 };
-Sphere sphere3{ { -2, 0, 4 } ,1.0,{ 0, 255, 0 ,255 },100,0.2 };
+Sphere sphere3{ { -2, 0, 4 } ,1.0,{ 0, 152, 10 ,255 },100,0.2 };
 
 //sphere array
 #define SPHERES 5
@@ -184,6 +186,7 @@ void DrawUI() {
 
 
 void selectionFlash() {
+	
 	static Sphere* lastSelectedSphere = nullptr;
 	static Color originalColour;
 
@@ -196,7 +199,7 @@ void selectionFlash() {
 		originalColour = currentSphereSelected->color;
 		changeColour = false;
 	}
-
+	
 	// Flashing logic
 	int interval = 1; // Adjust as needed
 	int time = GetTime();
@@ -214,7 +217,8 @@ void selectionFlash() {
 		// Reset to the original color outside the flashing interval
 		currentSphereSelected->color = originalColour;
 	}
-
+	
+	
 }
 
 void deleteSphere() {
@@ -232,7 +236,7 @@ void deleteSphere() {
 			_spheres[SPHERES - 1] = { 0 };
 		}
 	}
-
+	currentSphereSelected = &_spheres[0];
 }
 
 void deleteLight() {
@@ -249,6 +253,7 @@ void deleteLight() {
 			_lights[LIGHTS - 1] = { 0 };
 		}
 	}
+	currentLightSelected = &_lights[0];
 }
 
 void initialise() {
@@ -660,9 +665,6 @@ void render() {
 	}
 	if (drawUI) {
 		DrawUI();
-	}
-	if (drawUI && !drawEditor) {
-		selectionFlash();
 	}
 
 	EndDrawing();
