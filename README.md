@@ -35,7 +35,7 @@ This is [Kirby](https://kirby.nintendo.com/), Raytraced using this program
   
 **Controls for Spheres**
 - B to spawn sphere
-- C to cycle between spheres (Spheres will flash Neon Green)
+- C to cycle between spheres
 - X to delete sphere
 - TAB to toggle editor (use sliders to change values)
   
@@ -48,5 +48,6 @@ This is [Kirby](https://kirby.nintendo.com/), Raytraced using this program
 - I to decrease intensity of light
 - K to delete light source
 
-<add Raytracing Process>
-<add installation section>
+## Installation
+- Navigate to the releases menu on the right of the page
+- Download the EXE file
